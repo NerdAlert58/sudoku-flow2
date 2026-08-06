@@ -232,3 +232,80 @@ question → options → selected → reasons.
   FAIL-resolved. Artifacts frozen per CONTEXT.md policy.
 - **Reasons:** Both gates green within their retry caps; every finding routed explicitly
   (D-017, D-018); nothing deferred silently.
+
+## D-020 — Delivery shape (impl Phase 2 step 1)
+- **Question:** Shape A (linear phase-gate) or Shape B (parallel roadmap + features)?
+- **Options:** A — one builder, sequential, gated; B — DAG of feature briefs,
+  parallel-agent dispatch.
+- **Selected:** B (docs/ROADMAP.md + docs/features/NN-*.md, 13 pieces).
+- **Reasons:** The architecture has genuinely clean package seams (solver / generate /
+  oracle / catalog / web / httpapi) with naturally disjoint allow-lists; the build is
+  agent-dispatched (golanger per piece), so multiple builders are real; and go.mod is
+  written once (stdlib-only forever), removing the usual shared-manifest collision. The
+  DAG yields three usable parallel waves without inventing seams.
+
+## D-021 — Coverage report format for the build gate
+- **Question:** nerdflow's coverage gate consumes lcov/istanbul-json/coverage-xml/
+  simplecov-json; Go's native coverprofile is none of these.
+- **Options:** (a) declare Go coverprofile and let the 5b.6 gate degrade; (b) convert
+  coverprofile → LCOV in the coverage command via a pinned CI-side tool (gcov2lcov).
+- **Selected:** (b): coverage_command produces coverage.lcov via gcov2lcov, installed
+  with `go install` at a pinned tag — CI-side tooling only, never a go.mod entry (same
+  posture as govulncheck, ADR-0011/AUDIT S6).
+- **Reasons:** Keeps both gates honest (nerdflow's diff-line floor AND the 80% total
+  floor) without touching the stdlib-only runtime guarantee.
+
+## D-022 — VERCEL_TOKEN acquisition (Day-Zero)
+- **Question:** CI deploy needs VERCEL_TOKEN in GitHub Actions Secrets; dashboard token
+  creation requires a human.
+- **Options:** (a) block on human; (b) attempt programmatic token creation against the
+  Vercel API using the local CLI session (fresh, named, revocable — honors AUDIT S6);
+  (c) reuse the local CLI auth token as the secret (works, but not "created fresh").
+- **Selected:** (b) with fallback (c); if (c) is used, the deviation from S6's
+  fresh-token expectation is logged at F-02 and the token is rotated (re-login) when the
+  demo retires.
+- **Reasons:** (a) violates the autonomous mandate while alternatives exist; (b) honors
+  the frozen security posture exactly; (c) is the operator's own credential in their own
+  environment-gated secrets — acceptable residual risk for an ephemeral demo, logged.
+
+## D-023 — Deploy-spike vs the manual production gate
+- **Question:** F-01's walking-skeleton spike must deploy to Vercel before CI/CD exists.
+  Does that violate "a deploy reaches Vercel only through the manual gate"?
+- **Selected:** No — the PRD criterion governs the production instance. The spike uses a
+  PREVIEW deployment (never production, never the stable URL); the only production
+  deploys happen through the gated workflow at F-13. Recorded so the distinction is
+  auditable.
+- **Reasons:** AUDIT A1/A2 mandates an early real deploy ("only a real deploy exercises
+  it"); previews are Vercel's designed mechanism for exactly this.
+
+## D-024 — Timekeeping under a no-deadline mandate
+- **Question:** Impl asks for soft-start/soft-finish/hard-latest per piece; the PRD has
+  no calendar deadline (continuous autonomous build).
+- **Selected:** Wave order IS the schedule; per-piece calendar rows are N/A. The plan
+  records wave sequencing and the stop-rule: any piece failing its gates twice in a row
+  halts the run and surfaces to the human rather than thrashing.
+- **Reasons:** Fabricated dates would be theater; the stop-rule preserves the "stop and
+  renegotiate" function a hard-latest date normally serves.
+
+## D-025 — Jasnah plan review round 1: routing
+- **Question:** Jasnah returned VERDICT: FAIL — 2 blocking (UC-2's generated-puzzle
+  replay slice had no owning AC and an impossible wave; F-01's max-duration AC carried
+  the SECURITY F-10 signal on only one platform branch) + 4 observations. Route?
+- **Selected:** (a) revise now for both blockings (F-08 AC-6 added; F-01 AC-6 rewritten
+  configure-or-record on both branches; ROADMAP UC-2 row rescheduled W5 for the
+  generated slice). All four observations adopted (F-02 AC-8 header smoke; F-01 AC-9
+  coverage floor; F-06 AC-5 full C3 sealing; F-10 AC-3 handler N=3/band). Dated entry in
+  ROADMAP Amendment record. Re-dispatch jasnah round 2.
+- **Reasons:** Both blockings were real threshold-without-owner gaps — exactly the
+  "every piece green, system broken" failure the gate exists to catch; the observations
+  were strict tightenings at trivial cost.
+
+## D-026 — Jasnah convergence (rounds 2–3)
+- **Outcome:** Round 2 FAIL caught two composition defects introduced by the round-1
+  fixes (phantom 25/band handler test in the UC-3 row; replay verifier homed in
+  non-importable solver test files). Both fixed as round 2 prescribed (row names both
+  real instruments; verifier is exported oracle-package test-support API). Round 3:
+  PASS, all dimensions, zero blocking; one cosmetic wording observation (OBS-1)
+  recorded for any future touch of the UC-3 row. Plan frozen.
+- **Reasons:** Converged within the 2-re-dispatch cap; every finding routed by revision,
+  none accepted silently.

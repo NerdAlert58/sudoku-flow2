@@ -53,13 +53,43 @@ role_models: default
 readability_gate: blocking
 readability_budget: max_function_lines:50, max_nesting:3, max_cyclomatic:10, max_file_lines:400
 
+## Test discipline
+
+test_command: go test -race ./...
+coverage_command: go test -race -coverprofile=coverage.out -coverpkg=./... ./... && gcov2lcov -infile coverage.out -outfile coverage.lcov
+coverage_report: coverage.lcov (lcov)
+
+## CI/CD
+
+cicd_platform: github-actions,vercel
+cicd_config_files: .github/workflows/ci.yml .github/workflows/deploy.yml vercel.json
+cicd_triggers: push:master pr:opened pr:updated workflow-dispatch
+cicd_gates: test coverage lint build security-scan deploy
+cicd_deploy_hook: manual
+
+## Deployment discipline
+
+health_check: $ curl -fsS "$DEPLOY_URL/v1/health" | grep -q '"status":"ok"'
+rollback_command: vercel rollback ${PRIOR_DEPLOYMENT_URL}
+env_var_source: GitHub Actions Secrets (environment: production) — the app requires no runtime env vars
+
+## Cleanup discipline
+
+cleanup_cadence: manual
+cleanup_mode: report
+cleanup_categories: all
+cleanup_category_weights: default
+cleanup_p0_threshold: 0.6
+cleanup_p1_threshold: 0.2
+cleanup_thresholds: default
+
 <!-- BEGIN nerdflow-status -->
-## Current status (generated 2026-08-06T22:24:02Z, baseline ba8baeb)
+## Current status (generated 2026-08-06T22:53:41Z, baseline 5304d2c)
 > Derived from artifact presence + phase completion. If this disagrees with the
 > files, **the files win** — re-run the relevant nerdflow skill to refresh.
 
-- **Stage:** architecture frozen
-- **Frozen now:** PRD.md, AUDIT.md, USERS.md, ARCHITECTURE.md, DESIGN_DECISIONS.md, EVAL.md, SECURITY.md, COMPLIANCE.md
+- **Stage:** plan frozen — Shape B (parallel roadmap)
+- **Frozen now:** PRD.md, AUDIT.md, USERS.md, ARCHITECTURE.md, DESIGN_DECISIONS.md, EVAL.md, SECURITY.md, COMPLIANCE.md, docs/ROADMAP.md + docs/features/
 - **Mutable now:** piece `Status:` fields and `## Implementation notes` (during build); `docs/sessions/*` are append-only
 - **Build:** 0 session log(s); 0 build-time ADR amendment(s) promoted
 <!-- END nerdflow-status -->
