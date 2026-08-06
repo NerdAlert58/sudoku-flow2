@@ -309,3 +309,19 @@ question → options → selected → reasons.
   recorded for any future touch of the UC-3 row. Plan frozen.
 - **Reasons:** Converged within the 2-re-dispatch cap; every finding routed by revision,
   none accepted silently.
+
+## D-027 — Build dispatch strategy
+- **Question:** Subagent-in-shared-tree vs worktrees, per wave?
+- **Options:** (a) serialize everything in the main tree; (b) parallel subagents in one
+  shared tree for disjoint pieces; (c) serial pieces in-tree, parallel waves (W1/W4/W5)
+  in per-piece worktrees with agent builders.
+- **Selected:** (c). Also: each piece lands via its own feature branch + PR
+  (self-merged after verification per D-002); before F-02's gates exist, local gate
+  runs substitute for CI (logged per piece); after F-02, PRs merge only on green CI.
+  Phase 5c deploy is skipped project-wide (`cicd_deploy_hook: manual` — production
+  deploys are CI-managed through the gated workflow at F-13, per ADR-0010/D-023).
+- **Reasons:** The repo-wide `go test ./...` command makes shared-tree parallel red/green
+  captures pollute each other — worktrees isolate them; (a) wastes the plan's designed
+  parallelism. Red state for F-01 is the module-level "go.mod not found" error — the
+  literal module-not-found case the build protocol names as valid red for scaffolding
+  declared in Allow-list (source).

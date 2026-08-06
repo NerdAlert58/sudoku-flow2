@@ -322,3 +322,29 @@ satisfy a guard a 20-line static-scan test provides anyway. An env-var flag on t
 serving path — rejected: creates a production toggle whose only correct value is "off."
 **Consequences:** The negative-result experiment stays honest and reachable by
 benchmarks, and unreachable from any request path, mechanically.
+
+## ADR-0016: Vercel platform behavior pinned by the F-01 deploy spike
+
+**Status:** Accepted (2026-08-06, build-time amendment)
+**Source:** build session f-01 (docs/sessions/f-01__6399b58.md)
+**Context:** ADR-0001 deferred the Vercel build-model question to a real deploy spike
+(AUDIT A1: docs internally inconsistent; local builds cannot reproduce deploy behavior).
+The spike ran on 2026-08-06 against Vercel CLI 58.7.1.
+**Decision (observed facts, now binding):** (1) When root go.mod + cmd/server/main.go
+exist, Vercel auto-detects the new **Go Framework Preset**, which breaks the classic
+`api/` functions block; `"framework": null` in vercel.json is the explicit opt-out and
+this project ships the classic model with it. (2) `vercel deploy` without flags targets
+**production** for git-unconnected projects — every scripted deploy must pass an explicit
+target (`--target=preview` for spikes; `--prebuilt --prod` in the gated workflow only).
+(3) Preview deployment URLs sit behind Vercel SSO deployment protection; the production
+domain is the public surface — deployed smoke checks and the user-facing link use the
+production domain, and any preview-URL check goes through `vercel curl`. (4)
+`functions.maxDuration: 10` is accepted and bound at build time (unmatched patterns fail
+the build — negative evidence from attempt 1), satisfying SECURITY.md F-10's configure
+branch.
+**Alternatives considered:** Adopting the preset model — rejected for this iteration:
+the classic model is now spike-proven end-to-end, and ADR-0001's dual-entrypoint layout
+loses nothing by keeping it.
+**Consequences:** F-02's deploy workflow pins explicit targets and smokes the production
+domain; F-13 hands the user the production-domain URL; AUDIT A1's open question is
+closed by observation.

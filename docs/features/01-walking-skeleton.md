@@ -1,6 +1,6 @@
 # Feature: Walking skeleton + Vercel deploy spike
 
-**ID:** F-01 · **Roadmap piece:** P-01 · **Status:** Not started
+**ID:** F-01 · **Roadmap piece:** P-01 · **Status:** Done (2026-08-06) — automated checks green (vet/build/race), 85.4% coverage, acceptance verified against diff + live preview deploy; test-verifier PASS (tuned), readability PASS, leanness clean
 
 ## Description
 The smallest end-to-end system: one Go module (stdlib-only, version-pinned), the shared
@@ -123,3 +123,59 @@ project.
 > builds — chosen patterns within the architecture's constraints, trade-offs made,
 > deviations and why. Cross-cutting discoveries that affect other features must also be
 > propagated to ROADMAP.md or ARCHITECTURE.md, not just left here.
+
+### Build model (AC-6 deploy spike — resolves AUDIT A1's open question)
+- **First deploy attempt FAILED:** Vercel auto-detected **Framework Preset: Go** (the new
+  server preset; root `go.mod` + `cmd/server/main.go`). Under that preset `api/*.go` files
+  are not classic serverless functions, so the `functions` block errored the build with:
+  `The pattern "api/index.go" defined in 'functions' doesn't match any Serverless
+  Functions inside the 'api' directory.`
+- **What worked: the classic `api/` model, forced via `"framework": null` in
+  vercel.json.** Both entrypoints coexist in the repo exactly as ADR-0001 planned; only
+  the explicit framework opt-out was needed. vercel.json:
+  `{"framework": null, "rewrites": [{"source": "/(.*)", "destination": "/api/index"}],
+  "functions": {"api/index.go": {"maxDuration": 10}}}`
+- **CLI gotcha for F-02's deploy workflow:** Vercel CLI 58.7.1 targeted **Production** by
+  default on a bare `vercel deploy --yes` for this (git-unconnected) project — the failed
+  first attempt was aimed at Production. Preview requires an explicit `--target=preview`.
+  (No production deployment exists; the Production-targeted attempt died at build.)
+- **Deploy URL (preview, Ready):**
+  https://sudoku-flow2-jkbpfjgfg-nerdalert58s-projects.vercel.app
+- **maxDuration:** 10s, explicitly configured in vercel.json (SECURITY F-10; smallest
+  standard value covering the 5s generate deadline). Applied-evidence: an unmatched
+  `functions` pattern fails the build (observed in attempt 1), so the successful build
+  proves the pattern matched and the setting bound to api/index.go.
+
+### Curl evidence (via `vercel curl` — preview URLs sit behind Vercel SSO deployment protection; anonymous curl gets a 302 to vercel.com/sso-api)
+```
+GET /v1/health
+HTTP/2 200
+content-security-policy: default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+content-type: application/json
+strict-transport-security: max-age=63072000
+x-content-type-options: nosniff
+x-frame-options: DENY
+{"status":"ok","goVersion":"go1.24.1","apiVersion":"1"}   <- matches go.mod pin (AC-7)
+
+GET /
+HTTP/2 200
+content-type: text/html; charset=utf-8
+(same four frozen headers; no access-control-* anywhere)
+```
+
+### Decisions within the architecture's constraints
+- Middleware chain per AUDIT A6, composed in `chain(logW io.Writer, next http.Handler)`:
+  accessLog (slog JSON, status-recording writer defaulting 200) → recoverPanic (fixed
+  generic envelope, no panic value leaked) → securityHeaders (frozen set) → cors
+  (allowlist constant ships empty per AUDIT S2 — no header ever emitted) → mux.
+- Routing per ADR-0005: path-only patterns (`/v1/health`, `/v1/` catch-all → 404
+  envelope, `/` → `http.FileServerFS(web.FS)`); method dispatch inside the handler; 405
+  carries `Allow: GET` + envelope; HEAD is 405 like any non-GET (ADR-0005 consequence).
+- Wire structs in `httpapi/contracts.go` (C1's declared home); field order is contract
+  (AUDIT A5).
+- Static 404s stay the file server's plain text (ADR-0005) but carry the frozen headers
+  (middleware sets them before the mux runs).
+- Local verification: gofmt/vet/build clean; `go test -race ./...` green; coverage
+  85.4% total statements via `-coverpkg=./...` (AC-9 floor 80.0%). `gcov2lcov` is not
+  installed on this machine, so the lcov half of the frozen coverage command is
+  unverified locally — F-02's CI must install it.
