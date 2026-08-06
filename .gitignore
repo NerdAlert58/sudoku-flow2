@@ -1,0 +1,13 @@
+# Binaries and build artifacts
+/bin/
+*.exe
+
+# Coverage and test output
+coverage.out
+coverage.html
+
+# Vercel
+.vercel/
+
+# OS noise
+.DS_Store
