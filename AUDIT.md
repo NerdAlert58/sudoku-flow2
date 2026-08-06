@@ -177,13 +177,16 @@ NOT solver-grade assertions (D1–D3).
   is a one-line change plus tests. 405-with-envelope covers stray OPTIONS.
 - **Open questions:** None.
 
-### S3. HSTS is a no-op over plain HTTP by design
+### S3. HSTS is a no-op over plain HTTP by design; value frozen
 
 - **Where:** MDN Strict-Transport-Security.
 - **What:** Browsers ignore the header over HTTP; Vercel terminates TLS so production
   responses are HTTPS. Sending unconditionally is harmless locally and correct deployed.
-- **So what:** One unconditional header set in the shared middleware; no environment
-  branching.
+- **So what:** The exact frozen header is `Strict-Transport-Security: max-age=63072000`
+  (two years; no `includeSubDomains` — the deployment is a leaf `*.vercel.app` hostname
+  with no subdomains, and the smallest correct directive set wins). Emitted
+  unconditionally by the shared middleware, no environment branching, asserted verbatim
+  by the per-route header tests (EVAL.md contract-edge row).
 - **Open questions:** None.
 
 ### S4. Frame denial and sniffing defense
@@ -206,6 +209,46 @@ NOT solver-grade assertions (D1–D3).
   third-party entries; Go 1.24's `tool` directive would not.
 - **So what:** CI runs plain-text govulncheck via `go install`; a red run must be triaged
   as possible-new-CVE, not assumed flaky (recorded in EVAL.md regression triggers).
+- **Open questions:** None.
+
+### S6. Threat model — attacker classes and the assets they target
+
+- **Where:** This artifact set (derived from PRD scope + the findings above; demanded by
+  security review WEB-11, 2026-08-06).
+- **What:** The defended assets are, in order: (1) **contract fidelity of served
+  behavior** — byte-comparable `/v1` responses across iterations are the product's core
+  asset; (2) **deploy-path integrity** — only gate-approved master commits may define
+  what production serves; (3) **deploy credentials** — the highest-value secrets the
+  system touches; (4) **free-tier compute/spend** — availability of an ephemeral demo.
+  There are no confidentiality assets at runtime (no user data, no secrets in the app).
+  The attacker classes and their mitigations:
+  - **The anonymous internet caller** (targets compute/spend, availability): every
+    endpoint is public and unauthenticated by charter. Worst case is burning free-tier
+    compute. Bounded by the 1 MiB body / 256-item caps, the 5s generation deadline,
+    sub-millisecond solves, Vercel's platform DDoS protection, and the deployment's
+    ephemeral demo lifecycle. Residual risk consciously accepted (ARCHITECTURE.md §Known
+    Tradeoffs: no rate limiting, no concurrency ceiling, no WAF).
+  - **The supply-chain / CI-path attacker** (targets deploy integrity): a public repo
+    runs third-party code in CI. The application itself has zero third-party runtime
+    dependencies, enforced by the import-graph test (ADR-0002). CI exposure is bounded
+    by: GitHub Actions pinned to major version tags and govulncheck pinned to a specific
+    tagged version, both updated only via PR (ADR-0011); GitHub's defaults that secrets
+    are never exposed to fork-PR workflow runs and first-time contributors require
+    approval to run workflows; deploy secrets scoped to the `production` environment job
+    behind operator approval; Vercel git integration never connected.
+  - **The deploy-credential thief** (targets the production deployment): `VERCEL_TOKEN`
+    is account-scoped (Vercel tokens are not project-scoped — its blast radius is the
+    operator's whole Vercel account) and is therefore created fresh for this run, stored
+    only in GitHub Actions Secrets, exposed only to the approval-gated production job,
+    and revoked when the demo retires (rotation = deployment lifecycle). The workflows'
+    `GITHUB_TOKEN` runs with permissions restricted to `contents: read`.
+- **So what (decision input for ARCHITECTURE.md):** The six accepted security tradeoffs
+  (no rate limiting, no concurrency ceiling, no WAF, no alerting, no code signing, public
+  repo) each derive from this model rather than from convenience: no confidentiality
+  assets exist; integrity is defended at the deploy path (the single gated workflow IS
+  the code-signing substitute); availability abuse is bounded in cost and duration.
+  Contract fidelity is defended by the frozen struct contracts, the drift-guard test,
+  determinism tests, and master-only gated deploys.
 - **Open questions:** None.
 
 ## Data Quality

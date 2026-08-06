@@ -85,7 +85,9 @@ byte-cap vs item-cap 413 — rejected: one code + distinct human messages carrie
 information with a smaller frozen surface.
 **Consequences:** `/v1/solve` clients always parse one shape for domain outcomes; the
 envelope is uniform everywhere else; the code list is now contract and additive changes
-are forbidden on `/v1`.
+are forbidden on `/v1`. The `input` field always echoes the raw submitted puzzle string
+byte-for-byte — valid, invalid, or `.`-blank — one uniform echo rule (see also ADR-0014
+for the batch `puzzle` echo).
 
 ## ADR-0005: Path-only routing with in-handler method dispatch
 
@@ -144,7 +146,13 @@ discipline ("fires only when nothing cheaper can act"). Counting only the firing
 technique's checks — rejected: makes `candidateChecks` depend on log narration rather
 than work done, gutting its diagnostic value.
 **Consequences:** Grading is airtight by construction; two implementations following this
-ADR produce identical logs; the invariant gives tests a free structural check.
+ADR produce identical logs; the invariant gives tests a free structural check. Two
+clarifications frozen with it: the counted candidate accessor is **per-solve-instance
+state** (a solve context passed through detection), never package-level — the batch
+fan-out runs independent counters, race-free by construction; and grid completion is
+checked at the top of the loop **before** starting a pass, so an already-complete valid
+input runs zero passes (`iterations:0`, `eventCount:0` — the solved invariant holds at
+zero; see ADR-0014).
 
 ## ADR-0008: `unsolvable` keeps the PRD's literal scope
 
@@ -211,8 +219,13 @@ S5). Cite: ARCHITECTURE.md §CI/CD topology.
 **Decision:** Five blocking gates on every PR and on master pushes: `go vet ./...`;
 `go build ./...`; `go test -race -coverprofile=coverage.out -coverpkg=./... ./...`;
 coverage total ≥ 80.0 via `go tool cover -func` with float-safe awk comparison;
-`govulncheck ./...` in plain-text mode installed via `go install
-golang.org/x/vuln/cmd/govulncheck@latest`. All are required status checks on `master`.
+`govulncheck ./...` in plain-text mode installed via `go install` **pinned to a specific
+tagged version** recorded in the workflow (chosen from the current release at CI-piece
+build time; updated only via PR — the live vulnerability DB still updates underneath,
+which is the tool's value). GitHub Actions are pinned to major version tags
+(`actions/checkout@v4`-style), updated only via PR; workflow `GITHUB_TOKEN` permissions
+are restricted to `contents: read` (AUDIT.md S6). All five gates are required status
+checks on `master`.
 **Alternatives considered:** Coverage without `-coverpkg=./...` — rejected: verified to
 understate cross-package coverage (hands-on reproduction in research). govulncheck via Go
 1.24 `tool` directive — rejected: writes third-party entries into the go.mod that is the
@@ -263,3 +276,49 @@ circular.
 **Consequences:** Every shipped solve is mechanically re-derivable; a guess-shaped step
 surfaces as either an unforced placement or a true-candidate elimination; the verifier
 runs over all 55 corpus puzzles (and generated samples) in CI.
+
+## ADR-0014: Batch per-item representation and the complete-grid edge
+
+**Status:** Accepted (2026-08-06)
+**Context:** Halliday review (2026-08-06) flagged two unfrozen contract corners on the
+byte-diff surface: the exact field values of a failed/degraded batch item, and the
+behavior of `/v1/solve` on an already-complete valid grid. Cite ADR-0004, ADR-0007.
+**Decision:** Batch items: `puzzle` always echoes the raw submitted string byte-for-byte
+(the ADR-0004 echo rule; per-line whitespace/CRLF trimming applies to parsing only). A
+malformed line yields `{puzzle:<raw>, solved:false, solveTimeMs:0, iterations:0,
+hardestTechnique:""}` and never aborts the batch. An attempted item carries measured
+`solveTimeMs` and `iterations`; `solved` is `status=="solved"`; `hardestTechnique` is the
+technique string of the highest-ladder-position technique that fired during the attempt,
+regardless of final status, `""` when none fired. Complete-grid edge: an 81-given valid
+grid returns `status:"solved"`, `solution` equal to the input digits, `grade:"Easy"` (the
+floor band — a zero-work solve is trivially Easy, and the PRD requires a band for every
+solved puzzle), `iterations:0`, `eventCount:0`, `candidateChecks:0`, `events:[]`. A
+complete-but-rule-violating grid is `invalid_input` at parse (duplicate-given rejection),
+HTTP 400.
+**Alternatives considered:** Trimmed echo in batch items — rejected: two echo rules is
+one more than needed. `hardestTechnique` only for solved items — rejected: strictly less
+diagnostic for the batch-validation use case and no simpler. Grade `""` for the
+complete-grid solve — rejected: contradicts the PRD's "band of a solved puzzle" plus
+"key always present" pairing. `iterations:1` — rejected: breaks the ADR-0007 solved
+invariant (`iterations == eventCount`).
+**Consequences:** Every field of every batch item is now byte-predictable; the
+complete-grid fixture joins the contract-edge eval row; no reading of the PRD's batch
+wording is left to the builder.
+
+## ADR-0015: Scan-parallel variant containment
+
+**Status:** Accepted (2026-08-06)
+**Context:** UC-5 requires an intra-puzzle scan-parallel solver variant "behind a flag,"
+benchmarked as a measured negative result. ARCHITECTURE.md said it "must never become the
+default path" but named no mechanical guard (halliday observation 2).
+**Decision:** The variant is an exported `solver.SolveScanParallel` used exclusively by
+the committed benchmark. Containment is CI-checked by a static-scan test that walks all
+non-test Go source outside the solver package and fails on any reference to
+`SolveScanParallel` (eval row "Solve-path containment"). The flag of the PRD's wording is
+the explicit opt-in call; no env var or build tag switches the serving path.
+**Alternatives considered:** A separate package — rejected: the variant shares solver
+internals; exporting those internals to move it out would widen the API surface to
+satisfy a guard a 20-line static-scan test provides anyway. An env-var flag on the
+serving path — rejected: creates a production toggle whose only correct value is "off."
+**Consequences:** The negative-result experiment stays honest and reachable by
+benchmarks, and unreachable from any request path, mechanically.

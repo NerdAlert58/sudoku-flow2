@@ -186,3 +186,38 @@ question → options → selected → reasons.
   ARCHITECTURE.md §Frontend Design Language. No external kit.
 - **Reasons:** The PRD supplies a complete, deliberate aesthetic; importing an external
   kit would override a frozen input.
+
+## D-017 — Halliday review round 1: routing of blocking findings
+- **Question:** Halliday returned VERDICT: FAIL with three blocking findings (no SPA eval
+  row; batch per-item values unfrozen; complete-grid edge unfrozen) plus four
+  observations. Route each how?
+- **Options per finding:** (a) revise artifacts now; (b) accept as Known Tradeoff;
+  (c) defer to future revision.
+- **Selected:** (a) for all three blockings — EVAL.md gained the UI (SPA) 11-item
+  two-layer row and a Solve-path containment row; ADR-0014 froze batch item values and
+  the complete-grid edge; ADR-0015 froze scan-parallel containment. Observations adopted:
+  per-solve-instance counter (ADR-0007 amendment), raw-echo uniformity (ADR-0004
+  amendment), containment guard (ADR-0015); SECURITY.md sequencing confirmed (kaladin in
+  flight). Halliday re-dispatch (round 2) and kaladin staleness refresh to run against
+  the revised set.
+- **Reasons:** All findings were cheap contract-freeze/eval gaps; revision is strictly
+  better than accepting them as tradeoffs, and the operator's own diff tooling would hit
+  every one of them on day one.
+
+## D-018 — Kaladin review round 1: routing
+- **Question:** Kaladin returned VERDICT: FAIL — 2 blocking (WEB-05 HSTS max-age
+  unpinned; WEB-11 no written threat model), 6 tradeoffs, 3 deferred-to-impl, 3
+  rubric-gap advisories. Route each how?
+- **Selected:** Both blockings → (a) revise now: HSTS frozen as `max-age=63072000`
+  (AUDIT.md S3, ARCHITECTURE.md, EVAL.md contract-edge row); threat model written as
+  AUDIT.md S6 naming the three attacker classes + four defended assets, folding in all
+  three rubric gaps (deploy-credential blast radius + rotation, CI tooling/actions
+  pinning + fork-PR posture via ADR-0011 amendment, contract integrity as a defended
+  asset). All 6 tradeoffs → (a) accept as-is; each already had (or now has) its Known
+  Tradeoffs entry (no-alerting and code-signing/WAF/concurrency entries
+  extended/added). 3 deferred-to-impl (panic-message-no-internals test;
+  function-max-duration config verified at the deploy spike; go-toolchain pin) →
+  carried into SECURITY.md for /nerdflow:impl to map to real pieces.
+- **Reasons:** The two blockings were genuine unfrozen-value/undocumented-model gaps;
+  the tradeoffs' rationales were already the architecture's recorded position — kaladin
+  confirmed them as defensible rather than demanding removal.

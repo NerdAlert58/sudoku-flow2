@@ -37,7 +37,8 @@ four seams the HTTP shell consumes; each is a named contract below.
 only as request bodies (an 81-char string, a difficulty word, a puzzle list) and is
 validated at parse before touching the core. The middleware chain applies, outermost-in:
 access log → panic recovery → security headers (a `'self'`-only CSP with no
-unsafe-inline, HSTS, frame-denial, nosniff) → CORS (allowlist ships empty: no ACAO header
+unsafe-inline, `Strict-Transport-Security: max-age=63072000`, frame-denial, nosniff —
+values frozen in AUDIT.md S1/S3/S4) → CORS (allowlist ships empty: no ACAO header
 is ever emitted, no Origin echoed) → per-route method dispatch and body caps (1 MiB
 uniform; Content-Length fast-path plus `MaxBytesReader` enforcement; 415 before body
 read). The generator's uniqueness counter is blinded from the API surface by the
@@ -225,8 +226,12 @@ inside the binary; HTTP only at the edge. Job/queue/scheduler — none.
   test). Runtime: pure Go, deterministic. Reads: a parsed Grid. Writes: SolveResult.
   Blinded from: HTTP, randomness, the oracle. Produces C2; consumes nothing. Failure
   behavior: `invalid_input` at parse; `unsolvable` on a zero-candidate cell (literal PRD
-  scope, ADR-0008); `stalled` when no technique fires on an incomplete grid. Lives at
-  `solver/`.
+  scope, ADR-0008); `stalled` when no technique fires on an incomplete grid; an
+  already-complete valid grid is `solved` with zero passes/events and grade `"Easy"`
+  (ADR-0014). Metric counters are per-solve-instance state, never package-level — the
+  batch fan-out runs independent counters (ADR-0007). Also exports `SolveScanParallel`,
+  reachable only from the committed benchmark and guarded by a static-scan containment
+  test (ADR-0015). Lives at `solver/`.
 - **`generate` — sealed generation utility.** Responsibility: randomized full-grid fill
   (backtracking), symmetric-ish clue removal with a ≤2-solution uniqueness counter,
   grade-targeted accept/retry under the caller's context deadline; grade equality with the
@@ -275,8 +280,9 @@ The UI flow: `GET /` serves the SPA; the SPA fetches `/v1/puzzles` for the dropd
 client-side solving. The replay loop (tests): for each corpus puzzle, oracle solves it,
 the verifier replays every event against its own shadow candidate state per AUDIT.md L4,
 then re-runs the solve and byte-compares. Known implementation gap an honest reader needs:
-the scan-parallel variant (UC-5) is flag-gated code whose only purpose is the committed
-negative-result benchmark — it must never become the default path.
+the scan-parallel variant (UC-5) exists solely for the committed negative-result benchmark
+— it never serves requests, and that is mechanically enforced by the ADR-0015 static-scan
+containment test, not by convention.
 
 ## Storage
 
@@ -377,11 +383,19 @@ AUDIT.md C1)
 - **Public repository.** Required to make "CI blocks merge" and environment approval real
   on the free tier (AUDIT.md C1, DECISIONS.md D-007). Nothing sensitive lives in the repo;
   secrets are in GitHub Actions Secrets.
-- **No rate limiting.** Public read/compute endpoints on a free tier could be abused to
-  burn compute; mitigations are the 1 MiB/256-item caps, the 5s generation deadline,
-  sub-millisecond solves, Vercel's platform-level DDoS protection, and the deployment's
-  ephemeral demo nature. Adding rate limiting would complicate the timing surface being
+- **No rate limiting, no concurrency/instance ceiling, no WAF beyond Vercel's platform
+  protections.** Public read/compute endpoints on a free tier could be abused to burn
+  compute (the anonymous-caller class in AUDIT.md S6); mitigations are the 1 MiB/256-item
+  caps, the 5s generation deadline, sub-millisecond solves, Vercel's platform-level DDoS
+  protection, and the deployment's ephemeral demo nature. The injection surface a WAF
+  filters is structurally absent (no DB, no templates, inputs constrained to an 81-char
+  digit grammar at parse). Adding rate limiting would complicate the timing surface being
   benchmarked. Accepted consciously; revisit if a deployment is ever long-lived.
+- **No code signing on the deploy path.** Deploy trust is pinned to the single gated
+  workflow instead: master-only, secrets exposed solely to the approval-gated production
+  job, approval performed outside the workflow, Vercel git integration never connected
+  (AUDIT.md S6, ADR-0010). For a solo-operator demo this gate is the code-signing
+  substitute.
 - **`stalled` deliberately conflates** above-ladder, unprovably-unsolvable, and non-unique
   grids — the PRD forbids the solution-counting needed to separate them. By design.
 - **`unsolvable` is literally scoped** to zero-candidate cells; the symmetric
@@ -393,8 +407,9 @@ AUDIT.md C1)
   build piece and pins reality before anything depends on it (AUDIT.md A1/A2).
 - **govulncheck is legitimately non-reproducible** — a red build may be a newly published
   CVE, not a regression (AUDIT.md S5); triage rule lives in EVAL.md.
-- **No tracing/APM.** slog access lines + response-carried metrics only; acceptable for a
-  stateless single-operator tool.
+- **No tracing/APM and no alerting.** slog access lines + response-carried metrics only;
+  the deploy smoke failing the workflow is the only wired signal, and the operator acts
+  on it directly. Acceptable for a stateless single-operator tool (AUDIT.md S6).
 - **Static (non-/v1) 404s are plain text** from the file server; the JSON envelope
   guarantee covers the `/v1` surface and `GET /` success paths (ADR-0005).
 - **Vanilla-JS UI costs several hundred lines.** The dependency-free rule buys zero
