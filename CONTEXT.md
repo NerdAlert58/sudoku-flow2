@@ -54,12 +54,12 @@ readability_gate: blocking
 readability_budget: max_function_lines:50, max_nesting:3, max_cyclomatic:10, max_file_lines:400
 
 <!-- BEGIN nerdflow-status -->
-## Current status (generated 2026-08-06T21:18:44Z, baseline 8ba4039)
+## Current status (generated 2026-08-06T22:24:02Z, baseline ba8baeb)
 > Derived from artifact presence + phase completion. If this disagrees with the
 > files, **the files win** — re-run the relevant nerdflow skill to refresh.
 
-- **Stage:** idea / PRD drafted
-- **Frozen now:** PRD.md
+- **Stage:** architecture frozen
+- **Frozen now:** PRD.md, AUDIT.md, USERS.md, ARCHITECTURE.md, DESIGN_DECISIONS.md, EVAL.md, SECURITY.md, COMPLIANCE.md
 - **Mutable now:** piece `Status:` fields and `## Implementation notes` (during build); `docs/sessions/*` are append-only
 - **Build:** 0 session log(s); 0 build-time ADR amendment(s) promoted
 <!-- END nerdflow-status -->

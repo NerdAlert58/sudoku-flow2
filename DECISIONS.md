@@ -221,3 +221,14 @@ question → options → selected → reasons.
 - **Reasons:** The two blockings were genuine unfrozen-value/undocumented-model gaps;
   the tradeoffs' rationales were already the architecture's recorded position — kaladin
   confirmed them as defensible rather than demanding removal.
+
+## D-019 — Adversarial review convergence
+- **Question:** Accept the review outcomes and freeze the arch artifacts?
+- **Outcome:** Halliday round 3: PASS (all dimensions; round-2 govulncheck-pinning
+  inconsistency verified closed line-by-line; regression sweep clean; one wording nit
+  fixed in the same change). Kaladin round 2 + staleness refresh: PASS (all dimensions;
+  F-1/F-2 covered; 6 accepted tradeoffs; 4 deferred-to-impl ACs recorded in SECURITY.md
+  as the superset of both rounds' slugs). SECURITY.md written with reviewer verdict
+  FAIL-resolved. Artifacts frozen per CONTEXT.md policy.
+- **Reasons:** Both gates green within their retry caps; every finding routed explicitly
+  (D-017, D-018); nothing deferred silently.

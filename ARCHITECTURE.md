@@ -310,9 +310,10 @@ consumed by CI smoke and the future dashboard.
 
 **Platform** — `github-actions,vercel`.
 **Config file paths** — `.github/workflows/ci.yml .github/workflows/deploy.yml vercel.json`.
-**Secrets storage** — GitHub Actions Secrets: repo-scoped (`VERCEL_TOKEN`,
-`VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`), consumed only by the deploy workflow's
-`production`-environment job; provisioned once by the operator from a local `vercel link`.
+**Secrets storage** — GitHub Actions Secrets, environment-scoped (`production`):
+`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, consumed only by the deploy
+workflow's `production`-environment job; provisioned once by the operator from a local
+`vercel link`.
 `.vercel/project.json` is never committed.
 
 **Triggers**
