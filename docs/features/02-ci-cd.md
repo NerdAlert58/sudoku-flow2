@@ -1,6 +1,6 @@
 # Feature: CI/CD gates + gated deploy pipeline
 
-**ID:** F-02 · **Roadmap piece:** P-02 · **Status:** In progress (worktree, started 2026-08-06, baseline 5559999)
+**ID:** F-02 · **Roadmap piece:** P-02 · **Status:** Done (2026-08-06) — CI green on own PR (run 31131852753, 4/4 gates); protection armed (strict, enforce_admins); gate-pause proven by dispatched+rejected run 31131992988; secrets env-scoped; repo public
 
 ## Description
 The enforcement layer: both GitHub Actions workflows, the repo flipped public, required
