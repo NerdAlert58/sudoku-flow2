@@ -26,7 +26,7 @@ builder, and this project has no API-hiding need that would pay for that risk.
 
 The **contract surface** is frozen at two levels. At the wire: the `/v1` JSON shapes,
 status enums, error envelope, and HTTP codes defined in the PRD and pinned by
-ADR-0004…ADR-0008 — declared as Go structs in `solver/event.go` (event/log shapes, which
+ADR-0004…ADR-0008 and ADR-0014 — declared as Go structs in `solver/event.go` (event/log shapes, which
 are simultaneously domain types and wire types) and `httpapi/contracts.go` (request/
 response wrappers, envelope). Breaking changes mint `/v2`; additive changes are forbidden
 on `/v1` entirely because byte-comparability across NerdFlow iterations is the product.
@@ -328,9 +328,16 @@ AUDIT.md C1)
   pass/fail: exit code · triggers: pr, push:master. (Race detector mandatory per PRD.)
 - `coverage` · runs: `go tool cover -func=coverage.out` total ≥ 80.0, float-safe awk
   compare (AUDIT.md C2) · pass/fail: threshold · triggers: pr, push:master.
-- `security-scan` · runs: `go install golang.org/x/vuln/cmd/govulncheck@latest &&
-  govulncheck ./...` (plain-text mode only — JSON modes always exit 0, AUDIT.md S5) ·
-  pass/fail: exit code · triggers: pr, push:master.
+- `security-scan` · runs: `go install golang.org/x/vuln/cmd/govulncheck@<pinned-tag> &&
+  govulncheck ./...` — the specific tagged version is chosen from the current release
+  when the CI piece lands and updated only via PR (ADR-0011; the live vulnerability DB
+  still updates underneath, which is the tool's value); plain-text mode only — JSON modes
+  always exit 0 (AUDIT.md S5) · pass/fail: exit code · triggers: pr, push:master.
+
+Workflow hardening (applies to both workflow files, per ADR-0011 and AUDIT.md S6):
+GitHub Actions pinned — major version tags at minimum, commit-SHA pinning preferred at
+the CI piece; `GITHUB_TOKEN` permissions restricted to `contents: read`; deploy secrets
+exist only in the `production` environment scope.
 
 **Deploy topology**
 - `production` · trigger: `workflow-dispatch` (operator-initiated) · branch/tag: `master`
