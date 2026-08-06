@@ -1,0 +1,50 @@
+# Render config (pinned): d2 --layout=elk --theme=0 (sketch off)
+# Rendering of the verified ASCII graph in ARCHITECTURE.md §Diagram — not an independent source.
+
+direction: right
+
+clients: {
+  label: "Untrusted clients"
+  operator: "Operator (curl/jq)"
+  browser: "Browser SPA\n(served by GET /)"
+}
+
+entrypoints: {
+  label: "Entrypoints (both mount the same handler)"
+  cmd: "cmd/server/main.go\n(PORT env, local)"
+  vercel: "api/index.go\n(Vercel Handler)"
+}
+
+httpapi: {
+  label: "httpapi.New() — HTTP shell"
+  mw: "access log → panic recovery →\nsecurity headers (CSP/HSTS/deny/nosniff) →\nCORS (allowlist = empty) →\nmethod dispatch + body caps"
+}
+
+solver: "solver\n13-technique ladder\nzero backtracking (import test)\nstdlib-only"
+generate: "generate\nrand fill + dig + uniqueness counter\n(sealed; 5s deadline)"
+catalog: "catalog\nembedded puzzles.txt copy\n+ drift test vs repo root"
+web: "web\nembed.FS: index.html,\napp.js, app.css"
+oracle: "oracle (TESTS ONLY)\nbrute-force ground truth\nno shipped import (test-enforced)" {
+  style.stroke-dash: 3
+}
+
+clients.operator -> httpapi: "/v1 JSON (frozen contract C1)"
+clients.browser -> httpapi: "same-origin fetch (C1)"
+httpapi -> clients.browser: "GET / — HTML + external JS/CSS (C5)"
+
+entrypoints.cmd -> httpapi: "mounts"
+entrypoints.vercel -> httpapi: "mounts"
+
+httpapi -> solver: "solver.Solve(Grid) → SolveResult (C2)"
+httpapi -> generate: "generate.Generate(ctx, band, rng) (C3)"
+httpapi -> catalog: "catalog.Sections() (C4)"
+httpapi -> web: "web.FS (C5)"
+generate -> solver: "grades via solver.Solve (C2)"
+oracle -> solver: "imports Grid types (C6, tests only)" {
+  style.stroke-dash: 3
+}
+
+gate: {
+  label: "Human gate (build/deploy time)"
+  flow: "PR → CI gates (vet, build,\ntest -race + cover ≥80%, govulncheck)\n→ merge → workflow_dispatch\n→ production approval (operator)\n→ vercel deploy --prebuilt --prod\n→ smoke: /v1/health + /"
+}
