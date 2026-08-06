@@ -61,7 +61,9 @@ None.
 - **AC-4:** Determinism: consecutive full-corpus runs byte-match on events + the three
   counters. Eval row: "UC-2 Determinism".
 - **AC-5:** Containment tests: `solver` imports stdlib only; no non-test package
-  anywhere in the module imports `oracle`. Eval row: "Solve-path containment".
+  anywhere in the module imports `oracle`; and no non-test package other than `httpapi`
+  imports `generate` (the full ARCHITECTURE C3 sealing claim). Eval row: "Solve-path
+  containment".
 
 ## Testing requirements
 This piece IS tests plus the oracle package. The verifier must not read solver

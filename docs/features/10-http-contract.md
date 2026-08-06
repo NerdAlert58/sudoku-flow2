@@ -50,9 +50,10 @@ None.
 - **AC-2:** Handler-level determinism: double-POST of identical puzzles yields identical
   bodies except `solveTimeMs` (which is a positive float). Eval row: "UC-2 Determinism".
 - **AC-3:** POST /v1/generate returns `{puzzle, difficulty, grade}` with grade ==
-  requested difficulty (seeded); unknown difficulty → 400 `{error, code:"invalid_input"}`;
-  deadline exhaustion (test-injected) → 500 `{error, code:"generation_failed"}`. Eval
-  row: "UC-3 Generate" (integration).
+  requested difficulty for 3 seeded generations per band at handler level (the 25/band
+  matrix lives at package level in F-08 AC-1); unknown difficulty → 400
+  `{error, code:"invalid_input"}`; deadline exhaustion (test-injected) → 500
+  `{error, code:"generation_failed"}`. Eval row: "UC-3 Generate" (integration).
 - **AC-4:** POST /v1/validate-batch over the full corpus returns 55 in-order results
   with `solvedCount:55` under `-race`; ADR-0014 values hold exactly for malformed lines,
   CRLF/whitespace lines, and stalled items; 257 items → 413 before any solving; >1 MiB →

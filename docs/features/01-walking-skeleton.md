@@ -66,13 +66,19 @@ None — CI/CD lands in F-02.
   inline code) with 200 text/html.
 - **AC-6:** A real Vercel **preview** deployment (never `--prod`) serves AC-1's health
   response and AC-2's header set from the deployed URL; the build model that worked
-  (classic `api/` vs Go server preset) is recorded in Implementation notes and, if the
-  classic model, a function max-duration is explicitly configured in vercel.json at the
-  smallest value covering the 5s generation deadline. **Source:** SECURITY.md §F-10
+  (classic `api/` vs Go server preset) is recorded in Implementation notes. Under
+  EITHER model, the platform max duration is explicitly configured (vercel.json) at the
+  smallest value covering the 5s generation deadline where the platform allows it, and
+  otherwise the effective platform value is observed and recorded in Implementation
+  notes with where it was observed — never left silently at platform maximum.
+  **Source:** SECURITY.md §F-10
 - **AC-7:** go.mod pins a specific currently-supported Go version (≥1.22); the deployed
   `/v1/health` goVersion confirms the platform honored it. **Source:** SECURITY.md §F-11
 - **AC-8:** `go.sum` does not exist and go.mod contains zero `require` entries (stdlib
   only), and no `internal/` directory exists anywhere in the repo.
+- **AC-9:** Total statement coverage of the module at this piece's exit is ≥ 80.0%
+  measured by the frozen coverage command — so F-02's first gated PR inherits a green
+  floor, not a shortfall.
 
 ## Testing requirements
 Handler-level unit tests (httptest) covering AC-1..AC-5 and AC-8's structural

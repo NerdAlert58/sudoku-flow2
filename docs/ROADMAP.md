@@ -99,7 +99,7 @@ tooling). F-02 implements; every piece runs them locally before PR.
 | UC | Eval-matrix row | Integration test | Owning feature | Runs at |
 |---|---|---|---|---|
 | UC-1 | "UC-1 Solve" | Handler-level golden corpus: POST all 55 to /v1/solve, assert solved + oracle-equal + exact shape | F-10 | W6 (F-10 exit) |
-| UC-2 | "UC-2 Replay proof" + "UC-2 Determinism" | Replay verifier over all 55 + 20 generated; handler double-POST byte-compare (minus solveTimeMs) | F-06 (solver-level), F-10 (handler-level) | W4 first; full at W6 |
+| UC-2 | "UC-2 Replay proof" + "UC-2 Determinism" | Replay verifier over all 55 (F-06) + 20 seeded generated, 5/band (F-08 AC-6); handler double-POST byte-compare minus solveTimeMs (F-10) | F-06 (corpus), F-08 (generated slice), F-10 (handler-level) | W4 corpus; W5 generated slice; full at W6 |
 | UC-3 | "UC-3 Generate" | Seeded handler test: 25/band generations → oracle-unique, ladder-solved, grade==difficulty; unknown difficulty → 400 envelope | F-08 (package), F-10 (handler) | W5 first; full at W6 |
 | UC-4 | "UC-4 Batch" | Full-corpus batch POST under -race: 55 in-order results, solvedCount 55, caps + malformed-line fixtures | F-10 | W6 |
 | UC-5 | "UC-5 Parallelism evidence" | -race green on every CI run; committed benchmark shows sequential wins | F-12 | W4 |
@@ -176,6 +176,16 @@ not silently soften gates. The plan can change; silent drift cannot.
 > 5. For programmatic dispatch — picking the ready set, fanning out subagents, or creating worktrees in bulk — run `/nerdflow:build`.
 
 ## Amendment record
+
+### Amendment 2026-08-06 — jasnah round-1 blocking findings + observations
+Pre-freeze amendment during impl Phase 5b. (1) UC-2's generated-puzzle replay slice
+gained an owning AC — F-08 AC-6 (20 seeded, 5/band, through the F-06 verifier); the
+integration map's UC-2 "Runs at" now reads W4 corpus / W5 generated slice. (2) F-01 AC-6
+now carries the SECURITY §F-10 signal on both platform-model branches
+(configure-or-record, never silent platform maximum). Observations adopted: F-02 AC-8
+asserts the frozen header set in the deploy smoke; F-01 AC-9 asserts the 80% floor at
+skeleton exit; F-06 AC-5 widened to the full C3 sealing claim (only httpapi imports
+generate); F-10 AC-3 pins the handler-level N (3/band).
 
 ### Amendment <YYYY-MM-DD> — <reason>
 (template — real amendments land here during execution)

@@ -286,3 +286,16 @@ question → options → selected → reasons.
   halts the run and surfaces to the human rather than thrashing.
 - **Reasons:** Fabricated dates would be theater; the stop-rule preserves the "stop and
   renegotiate" function a hard-latest date normally serves.
+
+## D-025 — Jasnah plan review round 1: routing
+- **Question:** Jasnah returned VERDICT: FAIL — 2 blocking (UC-2's generated-puzzle
+  replay slice had no owning AC and an impossible wave; F-01's max-duration AC carried
+  the SECURITY F-10 signal on only one platform branch) + 4 observations. Route?
+- **Selected:** (a) revise now for both blockings (F-08 AC-6 added; F-01 AC-6 rewritten
+  configure-or-record on both branches; ROADMAP UC-2 row rescheduled W5 for the
+  generated slice). All four observations adopted (F-02 AC-8 header smoke; F-01 AC-9
+  coverage floor; F-06 AC-5 full C3 sealing; F-10 AC-3 handler N=3/band). Dated entry in
+  ROADMAP Amendment record. Re-dispatch jasnah round 2.
+- **Reasons:** Both blockings were real threshold-without-owner gaps — exactly the
+  "every piece green, system broken" failure the gate exists to catch; the observations
+  were strict tightenings at trivial cost.

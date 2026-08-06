@@ -68,8 +68,10 @@ None — COMPLIANCE.md declares `Applicable hats: N/A`.
   `permissions: contents: read`; the go version comes from `go-version-file: go.mod`
   (single source). **Source:** SECURITY.md §F-11
 - **AC-8:** The deploy workflow's smoke step is present and bounded (5 × 3s retries)
-  asserting `/v1/health` 200 + `status:"ok"` and `GET /` 200 text/html — exercised
-  end-to-end at F-13, present and syntax-valid here (actionlint or a dry parse).
+  asserting `/v1/health` 200 + `status:"ok"`, `GET /` 200 text/html, AND the frozen
+  security header set verbatim on both responses (so the SECURITY.md §F-12 check
+  re-asserts on every future deploy, not only at F-13) — exercised end-to-end at F-13,
+  present and syntax-valid here (actionlint or a dry parse).
 
 ## Testing requirements
 Live CI runs are the tests. Evidence links (run URLs, API responses) land in
