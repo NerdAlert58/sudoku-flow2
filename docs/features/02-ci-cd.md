@@ -1,6 +1,6 @@
 # Feature: CI/CD gates + gated deploy pipeline
 
-**ID:** F-02 · **Roadmap piece:** P-02 · **Status:** Not started
+**ID:** F-02 · **Roadmap piece:** P-02 · **Status:** In progress (worktree, started 2026-08-06, baseline 5559999)
 
 ## Description
 The enforcement layer: both GitHub Actions workflows, the repo flipped public, required
@@ -114,3 +114,44 @@ None.
 ## Implementation notes (filled in by the building agent)
 > The agent implementing this feature records its decisions and rationale here as it
 > builds. Cross-cutting discoveries propagate to ROADMAP.md or ARCHITECTURE.md.
+
+**2026-08-06 — F-02 build session (workflow files only; repo settings/secrets are the
+coordinator's operator actions).**
+
+- **Job/gate naming (coordinator directive):** four CI jobs — `lint` (go vet), `build`,
+  `test`, `security-scan` — are the required-status-check names; the coverage gate is a
+  named `coverage` step inside the `test` job (blocks merge via `test`'s status). This
+  maps ARCHITECTURE §CI/CD topology's five gates onto four checks: vet→`lint`,
+  coverage→step-in-`test`.
+- **Action pins (SHA + version comment), verified via GitHub API this session:**
+  `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1` (# v7.0.1 — major tag v7
+  points at this commit; matched to refs/tags/v7.0.1) and
+  `actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e` (# v7.0.0 — major tag v7 =
+  refs/tags/v7.0.0). Exceeds SECURITY F-11 / AC-7's "major tag minimum".
+- **Tool pins:** `gcov2lcov@v1.1.1` (latest tag per
+  `go list -m -versions github.com/jandelgado/gcov2lcov`; closes f-01 session Open item —
+  produces `coverage.lcov` in CI, AC-3) and `govulncheck@v1.6.0` (latest golang.org/x/vuln
+  tag per `go list -m -versions`; plain-text mode only — JSON always exits 0, AUDIT S5).
+  `vercel@58` (npm latest 58.7.1; major pin — same major the F-01 spike validated,
+  CLI 58.7.1).
+- **Coverage gate:** `go tool cover -func | grep total | awk '{print $3}' | tr -d '%'`
+  then float-safe `awk -v total=… 'BEGIN { exit !(total >= 80.0) }'` (AUDIT C2); verified
+  locally: passes 85.4 and 80.0, fails 79.9. Test run uses `-race -coverpkg=./...`
+  exactly as frozen.
+- **Deploy workflow:** workflow_dispatch only; job bound to `environment: production`;
+  explicit targets on every vercel command (`--environment=production`, `--prod`,
+  `--prebuilt --prod`) per ADR-0016(2); deployment URL captured to step output.
+- **Smoke (AC-8):** runs against the production domain https://sudoku-flow2.vercel.app,
+  never the per-deployment URL (SSO-protected, ADR-0016(3)); 5 × 3s bounded retries
+  (AUDIT C4); asserts /v1/health 200 + `"status":"ok"`, `/` 200 text/html, and the frozen
+  header set verbatim on BOTH responses (CSP, HSTS max-age=63072000, X-Frame-Options
+  DENY, X-Content-Type-Options nosniff — SECURITY F-12). Header extraction is
+  case-insensitive on names, exact on values, CRLF-safe; verified against a synthetic
+  response fixture including a negative case.
+- **Hardening:** both workflows declare workflow-level `permissions: contents: read`;
+  go version single-sourced via `go-version-file: go.mod` (AC-7); secrets referenced only
+  in the production-environment job.
+- **Validation:** `actionlint` (which also shellchecks run blocks) passes both files.
+- **Not done here (operator/coordinator):** repo visibility flip, branch protection with
+  the four required checks, `production` environment + reviewer, secrets provisioning
+  (D-022 provenance), and the live-run evidence URLs for AC-2/AC-4/AC-5/AC-6.

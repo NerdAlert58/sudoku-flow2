@@ -325,3 +325,27 @@ question → options → selected → reasons.
   parallelism. Red state for F-01 is the module-level "go.mod not found" error — the
   literal module-not-found case the build protocol names as valid red for scaffolding
   declared in Allow-list (source).
+
+## D-028 — VERCEL_TOKEN fallback executed (updates D-022)
+- **Outcome:** Programmatic fresh-token creation was attempted and REFUSED by Vercel
+  (`POST /v3/user/tokens` → `forbidden: Cannot create tokens for this app` — the CLI's
+  OAuth session cannot mint tokens). Fallback (c) executed: the operator's CLI session
+  token is stored as the `production`-environment-scoped `VERCEL_TOKEN` secret.
+- **Deviation from AUDIT S6:** the token is not fresh-created; blast radius remains the
+  operator's Vercel account. Compensations: secret is environment-scoped behind the
+  operator-approval gate; rotation = `vercel logout` + re-login when the demo retires
+  (invalidates the stored secret). Repo flipped PUBLIC (D-007) before any secret was
+  set; secrets live only in GitHub Actions environment storage.
+
+## D-029 — Two build-time discoveries at F-02
+- **Vercel git auto-connect:** flipping the repo public caused Vercel's GitHub app
+  (installed account-wide) to auto-link the repo to the project and deploy a PR preview.
+  Disconnected via `vercel git disconnect` (auto-deploy would bypass the manual
+  production gate, ADR-0010). No production deployment occurred outside the gate.
+- **Go toolchain bump (cross-cutting fix, coordinator-authorized):** CI's security-scan
+  failed — govulncheck@v1.6.0 requires go ≥1.25 and go.mod pinned the stale 1.24.1.
+  go.mod bumped to go 1.26.5 (current stable at go.dev/dl), satisfying SECURITY F-11's
+  "currently-supported" requirement. go.mod is F-01's allow-list territory; the one-line
+  edit rides on feature/f-02 as a logged exception because F-02's gate is what proved
+  the pin stale. Full local gates re-run green under 1.26.5; govulncheck: no
+  vulnerabilities found.
