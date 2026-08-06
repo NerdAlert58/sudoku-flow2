@@ -325,3 +325,14 @@ question → options → selected → reasons.
   parallelism. Red state for F-01 is the module-level "go.mod not found" error — the
   literal module-not-found case the build protocol names as valid red for scaffolding
   declared in Allow-list (source).
+
+## D-028 — VERCEL_TOKEN fallback executed (updates D-022)
+- **Outcome:** Programmatic fresh-token creation was attempted and REFUSED by Vercel
+  (`POST /v3/user/tokens` → `forbidden: Cannot create tokens for this app` — the CLI's
+  OAuth session cannot mint tokens). Fallback (c) executed: the operator's CLI session
+  token is stored as the `production`-environment-scoped `VERCEL_TOKEN` secret.
+- **Deviation from AUDIT S6:** the token is not fresh-created; blast radius remains the
+  operator's Vercel account. Compensations: secret is environment-scoped behind the
+  operator-approval gate; rotation = `vercel logout` + re-login when the demo retires
+  (invalidates the stored secret). Repo flipped PUBLIC (D-007) before any secret was
+  set; secrets live only in GitHub Actions environment storage.

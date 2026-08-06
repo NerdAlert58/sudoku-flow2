@@ -1,0 +1,80 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: setup vercel cli
+        run: npm install --global vercel@58
+      - name: vercel pull
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: vercel build
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+      - name: vercel deploy
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "deployment url: $url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: smoke production domain
+        env:
+          BASE: https://sudoku-flow2.vercel.app
+          EXPECTED_CSP: "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+        run: |
+          hval() { grep -i "^$1:" "$2" | head -n1 | sed -e 's/^[^:]*:[[:space:]]*//' -e 's/\r$//'; }
+          assert_header() {
+            local file="$1" label="$2" name="$3" want="$4" got
+            got=$(hval "$name" "$file")
+            if [ "$got" != "$want" ]; then
+              echo "$label: header $name mismatch"
+              echo "  want: $want"
+              echo "  got:  $got"
+              return 1
+            fi
+          }
+          check_headers() {
+            local file="$1" label="$2" bad=0
+            assert_header "$file" "$label" "Content-Security-Policy" "$EXPECTED_CSP" || bad=1
+            assert_header "$file" "$label" "Strict-Transport-Security" "max-age=63072000" || bad=1
+            assert_header "$file" "$label" "X-Frame-Options" "DENY" || bad=1
+            assert_header "$file" "$label" "X-Content-Type-Options" "nosniff" || bad=1
+            return "$bad"
+          }
+          attempt() {
+            local bad=0 code ctype
+            code=$(curl -sS -o body.txt -D headers.txt -w '%{http_code}' "$BASE/v1/health") || { echo "GET /v1/health: curl failed"; return 1; }
+            [ "$code" = "200" ] || { echo "GET /v1/health: expected 200, got $code"; bad=1; }
+            grep -q '"status":"ok"' body.txt || { echo 'GET /v1/health: body missing "status":"ok"'; bad=1; }
+            check_headers headers.txt "GET /v1/health" || bad=1
+            code=$(curl -sS -o body.txt -D headers.txt -w '%{http_code}' "$BASE/") || { echo "GET /: curl failed"; return 1; }
+            [ "$code" = "200" ] || { echo "GET /: expected 200, got $code"; bad=1; }
+            ctype=$(hval "Content-Type" headers.txt)
+            case "$ctype" in
+              text/html*) ;;
+              *) echo "GET /: expected content-type text/html, got '$ctype'"; bad=1 ;;
+            esac
+            check_headers headers.txt "GET /" || bad=1
+            return "$bad"
+          }
+          for i in 1 2 3 4 5; do
+            echo "smoke attempt $i/5 against $BASE"
+            if attempt; then
+              echo "smoke passed"
+              exit 0
+            fi
+            if [ "$i" -lt 5 ]; then sleep 3; fi
+          done
+          echo "smoke FAILED after 5 attempts against $BASE"
+          exit 1
