@@ -84,12 +84,12 @@ cleanup_p1_threshold: 0.2
 cleanup_thresholds: default
 
 <!-- BEGIN nerdflow-status -->
-## Current status (generated 2026-08-06T22:24:02Z, baseline ba8baeb)
+## Current status (generated 2026-08-06T22:53:41Z, baseline 5304d2c)
 > Derived from artifact presence + phase completion. If this disagrees with the
 > files, **the files win** — re-run the relevant nerdflow skill to refresh.
 
-- **Stage:** architecture frozen
-- **Frozen now:** PRD.md, AUDIT.md, USERS.md, ARCHITECTURE.md, DESIGN_DECISIONS.md, EVAL.md, SECURITY.md, COMPLIANCE.md
+- **Stage:** plan frozen — Shape B (parallel roadmap)
+- **Frozen now:** PRD.md, AUDIT.md, USERS.md, ARCHITECTURE.md, DESIGN_DECISIONS.md, EVAL.md, SECURITY.md, COMPLIANCE.md, docs/ROADMAP.md + docs/features/
 - **Mutable now:** piece `Status:` fields and `## Implementation notes` (during build); `docs/sessions/*` are append-only
 - **Build:** 0 session log(s); 0 build-time ADR amendment(s) promoted
 <!-- END nerdflow-status -->

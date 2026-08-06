@@ -299,3 +299,13 @@ question → options → selected → reasons.
 - **Reasons:** Both blockings were real threshold-without-owner gaps — exactly the
   "every piece green, system broken" failure the gate exists to catch; the observations
   were strict tightenings at trivial cost.
+
+## D-026 — Jasnah convergence (rounds 2–3)
+- **Outcome:** Round 2 FAIL caught two composition defects introduced by the round-1
+  fixes (phantom 25/band handler test in the UC-3 row; replay verifier homed in
+  non-importable solver test files). Both fixed as round 2 prescribed (row names both
+  real instruments; verifier is exported oracle-package test-support API). Round 3:
+  PASS, all dimensions, zero blocking; one cosmetic wording observation (OBS-1)
+  recorded for any future touch of the UC-3 row. Plan frozen.
+- **Reasons:** Converged within the 2-re-dispatch cap; every finding routed by revision,
+  none accepted silently.
