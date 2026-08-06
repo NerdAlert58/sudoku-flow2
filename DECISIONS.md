@@ -336,3 +336,16 @@ question → options → selected → reasons.
   operator-approval gate; rotation = `vercel logout` + re-login when the demo retires
   (invalidates the stored secret). Repo flipped PUBLIC (D-007) before any secret was
   set; secrets live only in GitHub Actions environment storage.
+
+## D-029 — Two build-time discoveries at F-02
+- **Vercel git auto-connect:** flipping the repo public caused Vercel's GitHub app
+  (installed account-wide) to auto-link the repo to the project and deploy a PR preview.
+  Disconnected via `vercel git disconnect` (auto-deploy would bypass the manual
+  production gate, ADR-0010). No production deployment occurred outside the gate.
+- **Go toolchain bump (cross-cutting fix, coordinator-authorized):** CI's security-scan
+  failed — govulncheck@v1.6.0 requires go ≥1.25 and go.mod pinned the stale 1.24.1.
+  go.mod bumped to go 1.26.5 (current stable at go.dev/dl), satisfying SECURITY F-11's
+  "currently-supported" requirement. go.mod is F-01's allow-list territory; the one-line
+  edit rides on feature/f-02 as a logged exception because F-02's gate is what proved
+  the pin stale. Full local gates re-run green under 1.26.5; govulncheck: no
+  vulnerabilities found.
