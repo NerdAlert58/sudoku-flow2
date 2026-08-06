@@ -100,7 +100,7 @@ tooling). F-02 implements; every piece runs them locally before PR.
 |---|---|---|---|---|
 | UC-1 | "UC-1 Solve" | Handler-level golden corpus: POST all 55 to /v1/solve, assert solved + oracle-equal + exact shape | F-10 | W6 (F-10 exit) |
 | UC-2 | "UC-2 Replay proof" + "UC-2 Determinism" | Replay verifier over all 55 (F-06) + 20 seeded generated, 5/band (F-08 AC-6); handler double-POST byte-compare minus solveTimeMs (F-10) | F-06 (corpus), F-08 (generated slice), F-10 (handler-level) | W4 corpus; W5 generated slice; full at W6 |
-| UC-3 | "UC-3 Generate" | Seeded handler test: 25/band generations → oracle-unique, ladder-solved, grade==difficulty; unknown difficulty → 400 envelope | F-08 (package), F-10 (handler) | W5 first; full at W6 |
+| UC-3 | "UC-3 Generate" | 25/band seeded package matrix (F-08 AC-1) + 3/band seeded handler test (F-10 AC-3), both → oracle-unique, ladder-solved, grade==difficulty; unknown difficulty → 400 envelope | F-08 (package), F-10 (handler) | W5 first; full at W6 |
 | UC-4 | "UC-4 Batch" | Full-corpus batch POST under -race: 55 in-order results, solvedCount 55, caps + malformed-line fixtures | F-10 | W6 |
 | UC-5 | "UC-5 Parallelism evidence" | -race green on every CI run; committed benchmark shows sequential wins | F-12 | W4 |
 | UC-6 | "UC-6 Catalog" | GET /v1/puzzles → 4 canonical sections, 25/10/10/10; drift test embedded==root | F-09 (package+drift), F-10 (handler) | W1 first; full at W6 |
@@ -186,6 +186,14 @@ now carries the SECURITY §F-10 signal on both platform-model branches
 asserts the frozen header set in the deploy smoke; F-01 AC-9 asserts the 80% floor at
 skeleton exit; F-06 AC-5 widened to the full C3 sealing claim (only httpapi imports
 generate); F-10 AC-3 pins the handler-level N (3/band).
+
+### Amendment 2026-08-06 (2) — jasnah round-2 composition defects
+(1) UC-3 integration row reworded to name both real instruments (25/band package matrix
+F-08 AC-1 + 3/band handler test F-10 AC-3) instead of a 25/band handler test no brief
+produces. (2) The replay verifier's importable home is pinned: exported test-support API
+in the `oracle` package (F-06 Description + AC-2; F-08 AC-6 references it), with
+solver/replay_test.go as corpus driver — closing the cross-package `_test.go`
+unreachability hazard without verifier duplication.
 
 ### Amendment <YYYY-MM-DD> — <reason>
 (template — real amendments land here during execution)

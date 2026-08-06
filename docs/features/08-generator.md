@@ -52,10 +52,12 @@ None.
   F-06 import-guard test); no counter/attempt data appears in any public return value.
 - **AC-5:** Generator randomness never touches solve-path determinism: the F-06
   determinism suite still passes unchanged (regression).
-- **AC-6:** 20 seeded generated puzzles (5 per band) pass the F-06 replay verifier
-  end-to-end — every event of every generated-puzzle solve passes all ADR-0013 checks,
-  final grids equal the oracle solutions. Eval row: "UC-2 Replay proof" (generated
-  slice).
+- **AC-6:** 20 seeded generated puzzles (5 per band) pass the replay verifier
+  end-to-end — imported from the `oracle` package's exported test-support API (F-06's
+  home for it; test-scope import, legal under the containment rule) inside
+  `generate/*_test.go` — every event of every generated-puzzle solve passes all
+  ADR-0013 checks, final grids equal the oracle solutions. Eval row: "UC-2 Replay
+  proof" (generated slice).
 
 ## Testing requirements
 Seeded-RNG matrix tests (fixed seeds committed), deadline error-path test, sealing

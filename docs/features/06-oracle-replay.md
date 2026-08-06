@@ -7,7 +7,11 @@ The trust machinery: the test-only brute-force `oracle` (solution + 2-capped uni
 count), the ADR-0013 replay verifier with its own shadow candidate state, the
 determinism byte-comparisons, the full-corpus proofs (solved + oracle-unique +
 oracle-equal), and the import-graph containment tests that make the logic-only guarantee
-mechanical.
+mechanical. The verifier is implemented as exported test-support API **in the `oracle`
+package** (e.g. `oracle.ReplayVerify`) so downstream test code in other packages (F-07
+fixtures, F-08's generated-slice AC-6) can import it — legal because the containment
+rule bans only non-test importers of oracle — with `solver/replay_test.go` as its
+corpus driver.
 
 ## How it fits the roadmap
 W4, parallel with F-12 (disjoint files). On the critical path. This piece converts
@@ -48,7 +52,9 @@ None.
 - **AC-1:** The oracle, on hand-checkable tiny fixtures and all 25 ORIGINAL seeds,
   produces solutions agreeing with the ladder solver, and reports count==1 for all 55
   corpus seeds.
-- **AC-2:** The replay verifier checks every event of every corpus solve per ADR-0013:
+- **AC-2:** The replay verifier — exported test-support API in the `oracle` package,
+  importable by test code in any package — checks every event of every corpus solve per
+  ADR-0013:
   placements satisfy the named single's condition recomputed from the verifier's own
   shadow state AND equal the oracle value; every elimination existed as a candidate, is
   never the oracle's value, and its technique's witness pattern structurally holds;
