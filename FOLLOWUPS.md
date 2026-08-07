@@ -17,3 +17,6 @@ Deferred advisory findings from build reviews (dated; none block Done).
 - F-06 round-2 note: per-checker mutation falsifiers exist for pointing + fish only;
   the wholesale-skip falsifier covers the arm. F-07 fixtures add positive per-checker
   coverage.
+- F-07 verifier RUBRIC_GAP-1: SolveCapped's zero-candidate branch has no self-test
+  (mutation survives today because every committed capped state genuinely stalls);
+  add a capped-unsolvable byte-match test if iso fixtures ever evolve.

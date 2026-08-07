@@ -1,6 +1,6 @@
 # Feature: Per-technique fixture suite + ladder-cap harness
 
-**ID:** F-07 · **Roadmap piece:** P-07 · **Status:** Not started
+**ID:** F-07 · **Roadmap piece:** P-07 · **Status:** Done (2026-08-07) — 13/13 fires-and-sound via ReplayVerify; 9/13 necessity+sufficiency proven; 4/13 recorded-evidence fallback (EVIDENCE.md); verifier PASS r1 (tuned)
 
 ## Description
 The per-technique evidence the PRD's success criteria demand: a ladder-cap test harness
@@ -94,3 +94,34 @@ None.
 
 ## Implementation notes (filled in by the building agent)
 > Decisions, curation evidence, and the final per-technique status table land here.
+
+**F-07 (test-author session, baseline 12e3933).** Ladder-cap harness `SolveCapped(g, maxPos)`
++ `LadderSize()` live in `solver/export_test.go` (in-package test code; no source change).
+Harness self-tests in `solver/laddercap_test.go`: cap 0 stalls every incomplete state
+(0 events, 1 iteration, grid untouched), cap 0 on a complete grid byte-matches Solve
+(ADR-0014), cap 13 byte-matches Solve on 5 corpus seeds spanning all 4 sections.
+Per-technique fixtures in `solver/technique_fixtures_test.go` (fires grids reuse the
+F-04/F-05 constants; isolation grids committed as consts with provenance). Soundness =
+ReplayVerify nil on the full solve from every fires fixture PLUS exact brute-force proof
+of the opening event's eliminations (closes the oracle-truth gap on the six two-completion
+fixture states, and supplies the committed positive verifier evidence F-06 flagged for
+hidden_subset and jellyfish). Curation search and fallback evidence recorded in
+`solver/testdata/techniques/EVIDENCE.md`.
+
+Final status table (9 proven, 4 fires-and-sound-with-evidence):
+
+| Pos | Technique | Fires | Sound | Necessity | Sufficiency | Status |
+|-----|-----------|-------|-------|-----------|-------------|--------|
+| 1 | naked_single | Y | Y | Y | Y | proven |
+| 2 | hidden_single | Y | Y | Y | Y | proven |
+| 3 | locked_candidates_pointing | Y | Y | Y | Y | proven |
+| 4 | locked_candidates_claiming | Y | Y | Y | Y | proven (curated seed s1p5 + r2c7=9) |
+| 5 | naked_subset | Y | Y | Y | Y | proven |
+| 6 | hidden_subset | Y | Y | Y (at fixture) | N | fires-and-sound + evidence |
+| 7 | x_wing | Y | Y | Y | Y | proven |
+| 8 | swordfish | Y | Y | Y (at fixture) | N | fires-and-sound + evidence |
+| 9 | jellyfish | Y | Y | Y (at fixture) | N | fires-and-sound + evidence (PRD pre-flagged) |
+| 10 | xy_wing | Y | Y | Y | Y | proven |
+| 11 | xyz_wing | Y | Y | Y (at fixture) | N | fires-and-sound + evidence |
+| 12 | w_wing | Y | Y | Y | Y | proven |
+| 13 | simple_colouring | Y | Y | Y | Y | proven |
