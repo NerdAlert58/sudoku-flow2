@@ -1,6 +1,6 @@
 # Feature: Ship — gated production deploy + closeout
 
-**ID:** F-13 · **Roadmap piece:** P-13 · **Status:** In progress (started 2026-08-07, baseline de03e29)
+**ID:** F-13 · **Roadmap piece:** P-13 · **Status:** Done (2026-08-07) — production deployed through the manual gate (run 31186845829); deployed smoke + independent curl + browser verification green; live at https://sudoku-flow2.vercel.app
 
 ## Description
 The terminal gate: a production deployment reached ONLY through the manual

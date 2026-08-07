@@ -374,3 +374,16 @@ question → options → selected → reasons.
   the same builder round. Re-gates: 5b.6 + 5b.7 + 5b.9 round 2 on the reworked diff.
 - **Reasons:** Exemptions are for real constraints, not convenience: the allow-list IS
   a checkable repo-reachable constraint; a 13-branch function is not.
+
+## D-032 — F-13 deploy failures diagnosed and fixed (updates D-028, amends F-02)
+- **Attempt 1:** stored VERCEL_TOKEN expired — Vercel CLI issues short-lived vca_ OAuth
+  tokens (refreshToken/expiresAt in auth.json); the copied secret went stale. Fix:
+  re-set the secret within the validity window immediately before dispatch. The
+  self-expiring credential improves the D-028 blast-radius posture; future deploys
+  repeat the refresh or the human creates a dashboard token.
+- **Attempt 2:** `vercel deploy --prebuilt` is incompatible with the classic Go
+  runtime's build output (ENOENT bootstrap at upload). Fix: PR#16 amended deploy.yml to
+  the remote-build path (plain `vercel deploy --prod --yes`) — the F-01-spike-proven
+  route; merged through full CI gates.
+- **Attempt 3:** SUCCESS end-to-end (run 31186845829) — gate → approval → deploy →
+  smoke green. Production live at https://sudoku-flow2.vercel.app
