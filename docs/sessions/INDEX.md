@@ -10,3 +10,4 @@
 | F-05 | 397f833 | 2026-08-06 | Upper ladder: 7 techniques, ALL 55 corpus solve (1 verifier fix round: wrap-priority discriminator) | — |
 | F-12 | ad7fc4e | 2026-08-06 | Scan-parallel variant + committed 10.8x negative-result benchmark + containment guard | — |
 | F-06 | ad7fc4e | 2026-08-06 | Oracle + replay proof machinery (1 verifier fix round: witness falsifier) | — |
+| F-07 | 12e3933 | 2026-08-07 | Per-technique evidence: 13/13 fire+sound, 9/13 proven, 4 evidence-fallback + tripwire | — |
