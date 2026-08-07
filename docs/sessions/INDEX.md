@@ -14,3 +14,4 @@
 | F-08 | 12e3933 | 2026-08-07 | Generator: dig-and-grade, sealed uniqueness counter, 79ms worst call vs 5s budget | — |
 | F-10 | 23c93f3 | 2026-08-07 | Full /v1 surface + edge matrix (5/5 mutations; non-solved wire pin) | — |
 | F-11 | aca6a05 | 2026-08-07 | Full SPA: 11/11 visual smoke, 3 highlight states, decomposed render path | — |
+| F-13 | de03e29 | 2026-08-07 | SHIPPED: gated production deploy, live smoke green (2 failed attempts diagnosed: token expiry, prebuilt/Go) | — |
