@@ -83,3 +83,23 @@ None.
 
 ## Implementation notes (filled in by the building agent)
 > Decisions and rationale land here as the piece builds.
+
+- Two files by concept: `catalog/catalog.go` (embed, `Section`, `Sections()`, `Raw()`,
+  once-parse) and `catalog/parse.go` (`parseCatalog`, `isPuzzleLine`), pairing the
+  pre-existing `catalog_test.go` / `parse_test.go` split.
+- Parse-once via `sync.OnceValue` (Go 1.21+ stdlib) rather than `init()`: malformed
+  embedded data panics at first `Sections()` call (AC-4's "init/first use"), and
+  `parseCatalog` stays independently testable against fixtures without tripping the
+  package on import.
+- Any `#`-prefixed line is a section boundary (AUDIT D2: names from ordinal position
+  `Original/Medium/Hard/Very Hard`, never header text). Blank lines skipped. Errors:
+  section count != 4 (also covers empty input — zero sections), any non-blank/non-#
+  line failing the 81-digit check, or a puzzle line before the first header.
+- 81-digit check is a hand-rolled byte loop (`len==81`, `'0'..'9'`) instead of
+  `regexp` — same contract as `^[0-9]{81}$`, no package-level regexp state.
+- `catalog/puzzles.txt` copied byte-for-byte from repo-root `puzzles.txt`
+  (`cp -p`, `cmp`-verified) per AUDIT A3 (`go:embed` cannot reach parent dirs);
+  drift-guard test enforces it stays identical.
+- Sections/puzzle-count validation (25/10/10/10) is intentionally NOT in
+  `parseCatalog` — the pinned error contract lists section count, line grammar, and
+  empty input only; counts are asserted by tests against the embedded corpus (AC-1).
