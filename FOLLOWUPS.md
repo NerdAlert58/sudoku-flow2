@@ -23,3 +23,5 @@ Deferred advisory findings from build reviews (dated; none block Done).
 - F-08 verifier RUBRIC_GAP-2: add a two-call seed-determinism self-equality test
   (property, not golden bytes) to catch hidden global-rng/time deps; verified true
   empirically today.
+- F-10 leanness: newRand's crypto-seeded math/rand could be rand.New(rand.NewSource(rand.Int63())) (one line, -2 imports); test-neutral per review.
+- F-10 verifier RUBRIC_GAP-2: wire-level generation_failed 500 body is design-untestable (no failure seam through the wire); covered white-box. RUBRIC_GAP-3: AC-2 uses decoded-equality; byte-splice instrument would be stricter.

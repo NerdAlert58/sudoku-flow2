@@ -1,6 +1,6 @@
 # Feature: HTTP contract — full /v1 surface + edge matrix
 
-**ID:** F-10 · **Roadmap piece:** P-10 · **Status:** In progress (started 2026-08-07, baseline 23c93f3)
+**ID:** F-10 · **Roadmap piece:** P-10 · **Status:** Done (2026-08-07) — 35+ httpapi tests green; 55-corpus oracle-equal through the handler; verifier PASS (tuned, 5/5 mutations); pin condition discharged; readability PASS; leanness advisory-only
 
 ## Description
 Completes the frozen wire contract: `/v1/solve`, `/v1/generate`, `/v1/validate-batch`

@@ -349,3 +349,14 @@ question → options → selected → reasons.
   edit rides on feature/f-02 as a logged exception because F-02's gate is what proved
   the pin stale. Full local gates re-run green under 1.26.5; govulncheck: no
   vulnerabilities found.
+
+## D-030 — F-10 round: sequencing slip + CI timing calibration
+- **Outcome:** (1) f-10 was branched before PR#13 (F-08) merged — a watcher loop
+  exhausted without asserting MERGED; the builder compile-materialized generate/ from
+  the branch; resolved by pre-review commit + rebase. Process rule adopted: merge
+  watchers must assert the MERGED state, never exit silently on loop exhaustion.
+  (2) PR#13's CI failure was runner-speed, not correctness: the generator tests' 5s
+  per-call ctx (79ms worst locally) blew up on 2-core shared runners under -race;
+  amended to 30s (EVAL's threshold is explicitly "locally"; the product 5s budget is
+  the handler's per ADR-0009). (3) Interpretive freeze ratified: generate response
+  difficulty==grade==canonical band (ADR-0009 literal equality).
