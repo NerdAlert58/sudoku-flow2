@@ -1,6 +1,6 @@
 # Feature: Scan-parallel variant + honest negative-result benchmark
 
-**ID:** F-12 · **Roadmap piece:** P-12 · **Status:** Not started
+**ID:** F-12 · **Roadmap piece:** P-12 · **Status:** Done (2026-08-06) — equivalence 66/66 grids; guard non-vacuous (plant-proven); benchmark committed (~10.8x negative result); test-verifier PASS (tuned); readability PASS; leanness net -2 advisory
 
 ## Description
 UC-5's honesty artifact: `solver.SolveScanParallel` (an intra-puzzle scan-parallel
@@ -41,8 +41,10 @@ None.
 
 ## Acceptance criteria
 - **AC-1:** `SolveScanParallel` produces results identical to `Solve` (same status,
-  solution, events, counters) on all 55 corpus seeds — the variant parallelizes
-  scanning, never semantics — and is race-clean under `-race`.
+  solution, events, and the semantic counters Iterations and EventCount;
+  CandidateChecks explicitly exempt — it meters scan work, the one thing the variant
+  changes) on all 55 corpus seeds — the variant parallelizes scanning, never
+  semantics — and is race-clean under `-race`.
 - **AC-2:** A `go test -bench` benchmark compares sequential vs scan-parallel on the 10
   VERY-HARD seeds; the measured numbers are committed to `docs/bench/scan-parallel.md`
   with the honest conclusion (expected: sequential wins on 9×9 — a measured negative
@@ -87,3 +89,21 @@ None.
 
 ## Implementation notes (filled in by the building agent)
 > Decisions, the measured numbers, and the benchmark environment land here.
+
+- **Design (solver/scanparallel.go):** `SolveScanParallel` keeps `Solve`'s exact loop
+  (complete → iterations++ → zero-candidate → pass); only the pass differs.
+  `runPassScanParallel` launches one goroutine per ladder technique, each probing a
+  private `solveState` snapshot (value-copied `grid` + `cands` arrays, own `checks`
+  counter — race-clean with no mutex), records fired/not-fired into a per-index slice,
+  joins via `sync.WaitGroup`, then re-fires the lowest firing rung on the real state.
+  Re-firing on the real state (identical to the probe snapshot; detectors are
+  deterministic) makes Status/Solution/Events/Iterations/EventCount/Grade byte-identical
+  to sequential by construction; only `CandidateChecks` differs (probe counts are
+  discarded, the real state counts only committed fires).
+- **Measured result (negative, per PRD UC-5):** sequential ~2.12 ms vs scan-parallel
+  ~22.85 ms per 10-VERY-HARD-seed batch (~10.8x slower), 459 KB/7,415 allocs vs
+  7.46 MB/~132,865 allocs per op. Environment: go1.26.5 darwin/arm64, Apple M4 Max,
+  GOMAXPROCS=14, macOS 26.5.1. Full raw output committed in docs/bench/scan-parallel.md.
+- **Verification:** `gofmt -l .` clean; `go vet ./...` clean; `go build ./...` ok;
+  `go test -race -count=1 ./...` all green repo-wide (equivalence over 55 corpus seeds +
+  fixtures, containment guard, all prior suites).
