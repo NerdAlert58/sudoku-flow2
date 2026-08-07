@@ -52,6 +52,19 @@ func (s *solveState) place(technique string, i, d int) {
 	})
 }
 
+func (s *solveState) eliminate(technique string, witnesses []Cell, elims []Elimination) {
+	for _, e := range elims {
+		s.cands[e.Row*9+e.Col] &^= 1 << e.Digit
+	}
+	s.events = append(s.events, Event{
+		Seq:          len(s.events) + 1,
+		Technique:    technique,
+		WitnessCells: witnesses,
+		Eliminations: elims,
+		GridAfter:    s.grid.String(),
+	})
+}
+
 func (s *solveState) result(status string) SolveResult {
 	return SolveResult{
 		Status:          status,

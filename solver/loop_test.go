@@ -44,10 +44,15 @@ func TestSolve_LoopInvariants_SolvedSeeds(t *testing.T) {
 	}
 }
 
-func TestSolve_Stalled_MediumSeed(t *testing.T) {
-	res := solver.Solve(mustParse(t, mediumSeed(t)))
+// Anchor requirement: a seed that stalls at the current ladder tier; F-05's author must re-anchor onto a beyond-full-ladder fixture when the upper ladder lands.
+func TestSolve_Stalled_HardSeed(t *testing.T) {
+	sections := readCorpusSections(t)
+	if len(sections) < 3 || len(sections[2]) == 0 {
+		t.Fatal("corpus: no HARD section")
+	}
+	res := solver.Solve(mustParse(t, sections[2][0]))
 	if res.Status != "stalled" {
-		t.Fatalf("Status = %q, want stalled (MEDIUM seed needs beyond-singles techniques)", res.Status)
+		t.Fatalf("Status = %q, want stalled (HARD seed needs beyond-current-ladder techniques)", res.Status)
 	}
 	if res.Grade != "" {
 		t.Fatalf("Grade = %q, want empty for stalled", res.Grade)
