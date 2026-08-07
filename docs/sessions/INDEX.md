@@ -13,3 +13,4 @@
 | F-07 | 12e3933 | 2026-08-07 | Per-technique evidence: 13/13 fire+sound, 9/13 proven, 4 evidence-fallback + tripwire | — |
 | F-08 | 12e3933 | 2026-08-07 | Generator: dig-and-grade, sealed uniqueness counter, 79ms worst call vs 5s budget | — |
 | F-10 | 23c93f3 | 2026-08-07 | Full /v1 surface + edge matrix (5/5 mutations; non-solved wire pin) | — |
+| F-11 | aca6a05 | 2026-08-07 | Full SPA: 11/11 visual smoke, 3 highlight states, decomposed render path | — |
