@@ -84,7 +84,7 @@ cleanup_p1_threshold: 0.2
 cleanup_thresholds: default
 
 <!-- BEGIN nerdflow-status -->
-## Current status (generated 2026-08-07T14:29:59Z, baseline 37c508f)
+## Current status (generated 2026-08-07T14:32:26Z, baseline e2d3812)
 > Derived from artifact presence + phase completion. If this disagrees with the
 > files, **the files win** — re-run the relevant nerdflow skill to refresh.
 
