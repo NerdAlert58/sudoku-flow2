@@ -195,5 +195,11 @@ in the `oracle` package (F-06 Description + AC-2; F-08 AC-6 references it), with
 solver/replay_test.go as corpus driver — closing the cross-package `_test.go`
 unreachability hazard without verifier duplication.
 
+### Amendment 2026-08-06 (3) — F-12 AC-1 counter-scope clarification
+Verifier round-1 note: AC-1's word "counters" was ambiguous across the three quartet
+counters. Clarified in the brief: Iterations and EventCount must equal Solve's;
+CandidateChecks is explicitly exempt (it meters scan work — the one thing the variant
+changes; 41/66 grids differ). EVAL.md's UC-5 row never demanded counter equality.
+
 ### Amendment <YYYY-MM-DD> — <reason>
 (template — real amendments land here during execution)
