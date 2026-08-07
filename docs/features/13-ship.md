@@ -1,6 +1,6 @@
 # Feature: Ship — gated production deploy + closeout
 
-**ID:** F-13 · **Roadmap piece:** P-13 · **Status:** Not started
+**ID:** F-13 · **Roadmap piece:** P-13 · **Status:** In progress (started 2026-08-07, baseline de03e29)
 
 ## Description
 The terminal gate: a production deployment reached ONLY through the manual
