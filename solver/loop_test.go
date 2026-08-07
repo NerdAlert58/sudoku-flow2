@@ -44,13 +44,17 @@ func TestSolve_LoopInvariants_SolvedSeeds(t *testing.T) {
 	}
 }
 
-// Anchor requirement: a seed that stalls at the current ladder tier; F-05's author must re-anchor onto a beyond-full-ladder fixture when the upper ladder lands.
-func TestSolve_Stalled_HardSeed(t *testing.T) {
-	sections := readCorpusSections(t)
-	if len(sections) < 3 || len(sections[2]) == 0 {
-		t.Fatal("corpus: no HARD section")
-	}
-	res := solver.Solve(mustParse(t, sections[2][0]))
+// Permanent stall anchor (re-anchored by F-05 as sanctioned): four empty
+// cells forming a two-solution {2,5} rectangle at r4/r5 x c1/c7. No ladder
+// technique 1-13 fires (the x-wing shape on digits 2 and 5 has zero
+// elimination targets, so the productive-event rule skips it), and no
+// logic-only technique ever can - both completions are valid, so nothing is
+// deducible. Verified against the F-05 scratch reference: full-ladder stall
+// with zero events, >=2 brute-force solutions.
+const beyondLadderGrid = "762314589819576234534928176476152398103869407908437601681293745247685913395741862"
+
+func TestSolve_Stalled_BeyondLadder(t *testing.T) {
+	res := solver.Solve(mustParse(t, beyondLadderGrid))
 	if res.Status != "stalled" {
 		t.Fatalf("Status = %q, want stalled (HARD seed needs beyond-current-ladder techniques)", res.Status)
 	}

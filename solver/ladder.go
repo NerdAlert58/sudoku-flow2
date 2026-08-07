@@ -15,6 +15,13 @@ var ladder = []technique{
 	elimination("locked_candidates_claiming", "Medium", (*solveState).detectClaiming),
 	elimination("naked_subset", "Medium", (*solveState).detectNakedSubset),
 	elimination("hidden_subset", "Medium", (*solveState).detectHiddenSubset),
+	elimination("x_wing", "Hard", (*solveState).detectXWing),
+	elimination("swordfish", "Hard", (*solveState).detectSwordfish),
+	elimination("jellyfish", "Hard", (*solveState).detectJellyfish),
+	elimination("xy_wing", "Hard", (*solveState).detectXYWing),
+	elimination("xyz_wing", "Expert", (*solveState).detectXYZWing),
+	elimination("w_wing", "Expert", (*solveState).detectWWing),
+	elimination("simple_colouring", "Expert", (*solveState).detectSimpleColouring),
 }
 
 // elimination wires a detection func's frozen event string once, here at the
