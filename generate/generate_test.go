@@ -32,7 +32,8 @@ var bands = []struct{ band, grade string }{
 // expert 4000..4024.
 func ac1Seed(bandIdx, i int) int64 { return int64(1000*(bandIdx+1) + i) }
 
-const perCallDeadline = 5 * time.Second
+// The 5s product deadline is the handler's (ADR-0009); this 30s test budget absorbs slow shared CI runners under -race — local calls stay ~ms.
+const perCallDeadline = 30 * time.Second
 
 func generateSeeded(t *testing.T, band string, seed int64) (string, string, error) {
 	t.Helper()
@@ -53,9 +54,15 @@ func TestGenerate_SeededMatrix(t *testing.T) {
 		t.Run(b.band, func(t *testing.T) {
 			t.Parallel()
 			mismatches := 0
+			var maxCall time.Duration
 			for i := 0; i < 25; i++ {
-				mismatches += checkGeneration(t, b.band, b.grade, ac1Seed(bi, i))
+				m, d := checkGeneration(t, b.band, b.grade, ac1Seed(bi, i))
+				mismatches += m
+				if d > maxCall {
+					maxCall = d
+				}
 			}
+			t.Logf("max per-call Generate duration: %v (budget %v)", maxCall, perCallDeadline)
 			if mismatches != 0 {
 				t.Errorf("AC-2: %d grade mismatches over 25 %s generations, want 0", mismatches, b.band)
 			}
@@ -64,13 +71,16 @@ func TestGenerate_SeededMatrix(t *testing.T) {
 }
 
 // checkGeneration runs one seeded generation, asserts the AC-1 properties,
-// and returns the number of grade mismatches it observed (the AC-2 counter).
-func checkGeneration(t *testing.T, band, wantGrade string, seed int64) int {
+// and returns the number of grade mismatches it observed (the AC-2 counter)
+// plus the Generate call's wall-clock duration.
+func checkGeneration(t *testing.T, band, wantGrade string, seed int64) (int, time.Duration) {
 	t.Helper()
+	callStart := time.Now()
 	puzzle, grade, err := generateSeeded(t, band, seed)
+	callDur := time.Since(callStart)
 	if err != nil {
 		t.Errorf("seed %d: Generate(%q) error: %v", seed, band, err)
-		return 0
+		return 0, callDur
 	}
 	mismatches := 0
 	if grade != wantGrade {
@@ -80,7 +90,7 @@ func checkGeneration(t *testing.T, band, wantGrade string, seed int64) int {
 	g, perr := solver.Parse(puzzle)
 	if perr != nil {
 		t.Errorf("seed %d: puzzle %q does not parse: %v", seed, puzzle, perr)
-		return mismatches
+		return mismatches, callDur
 	}
 	sol, count := oracle.Solve(g)
 	if count != 1 {
@@ -89,7 +99,7 @@ func checkGeneration(t *testing.T, band, wantGrade string, seed int64) int {
 	res := solver.Solve(g)
 	if res.Status != "solved" {
 		t.Errorf("seed %d: ladder status = %q, want solved (puzzle %s)", seed, res.Status, puzzle)
-		return mismatches
+		return mismatches, callDur
 	}
 	if res.EventCount == 0 {
 		t.Errorf("seed %d: zero-event solve — the generated puzzle has no blanks (puzzle %s)", seed, puzzle)
@@ -101,7 +111,7 @@ func checkGeneration(t *testing.T, band, wantGrade string, seed int64) int {
 		mismatches++
 		t.Errorf("seed %d: end-to-end solver grade = %q, want %q (puzzle %s)", seed, res.Grade, wantGrade, puzzle)
 	}
-	return mismatches
+	return mismatches, callDur
 }
 
 // AC-3: an already-expired deadline surfaces as an error wrapping BOTH
