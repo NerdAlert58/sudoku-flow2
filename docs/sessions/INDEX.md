@@ -12,3 +12,4 @@
 | F-06 | ad7fc4e | 2026-08-06 | Oracle + replay proof machinery (1 verifier fix round: witness falsifier) | — |
 | F-07 | 12e3933 | 2026-08-07 | Per-technique evidence: 13/13 fire+sound, 9/13 proven, 4 evidence-fallback + tripwire | — |
 | F-08 | 12e3933 | 2026-08-07 | Generator: dig-and-grade, sealed uniqueness counter, 79ms worst call vs 5s budget | — |
+| F-10 | 23c93f3 | 2026-08-07 | Full /v1 surface + edge matrix (5/5 mutations; non-solved wire pin) | — |

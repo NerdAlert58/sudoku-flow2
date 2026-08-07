@@ -13,15 +13,17 @@ import (
 func routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/health", handleHealth)
+	mux.HandleFunc("/v1/solve", handleSolve)
+	mux.HandleFunc("/v1/generate", handleGenerate)
+	mux.HandleFunc("/v1/validate-batch", handleValidateBatch)
+	mux.HandleFunc("/v1/puzzles", handlePuzzles)
 	mux.HandleFunc("/v1/", handleV1NotFound)
 	mux.Handle("/", http.FileServerFS(web.FS))
 	return mux
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.Header().Set("Allow", http.MethodGet)
-		writeEnvelope(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed; only GET is supported")
+	if !gateMethod(w, r, http.MethodGet) {
 		return
 	}
 	writeJSON(w, http.StatusOK, healthResponse{

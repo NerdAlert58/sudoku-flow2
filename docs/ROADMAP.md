@@ -201,5 +201,10 @@ counters. Clarified in the brief: Iterations and EventCount must equal Solve's;
 CandidateChecks is explicitly exempt (it meters scan work — the one thing the variant
 changes; 41/66 grids differ). EVAL.md's UC-5 row never demanded counter equality.
 
+### Amendment 2026-08-07 — F-10 non-solved wire pin (verifier condition)
+Stalled/unsolvable /v1/solve responses are HTTP 200 carrying the constructive partial
+grid in `solution` (grade "", iterations==eventCount+1) — upheld against the PRD honesty
+clause and now wire-pinned by httpapi/solve_nonsolved_test.go before F-11 consumes it.
+
 ### Amendment <YYYY-MM-DD> — <reason>
 (template — real amendments land here during execution)
