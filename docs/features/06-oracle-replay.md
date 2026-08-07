@@ -1,6 +1,6 @@
 # Feature: Oracle + replay proof + containment
 
-**ID:** F-06 · **Roadmap piece:** P-06 · **Status:** Not started
+**ID:** F-06 · **Roadmap piece:** P-06 · **Status:** Done (2026-08-06) — 55/55 replay proof (3228 events, 0 failures); oracle agreement + uniqueness; tamper quartet + witness falsifier; verifier PASS r2 (tuned); readability PASS; leanness deferred to FOLLOWUPS
 
 ## Description
 The trust machinery: the test-only brute-force `oracle` (solution + 2-capped uniqueness
@@ -108,3 +108,47 @@ None.
 
 ## Implementation notes (filled in by the building agent)
 > Decisions and rationale land here as the piece builds.
+
+- **Package shape (6 files, one concept each):** `oracle.go` brute force; `shadow.go`
+  geometry + shadow candidate state + independent singles detection; `replay.go`
+  verifier core (sentinels, event loop, pinned check orders); `witness.go` structural
+  checks for locked-candidates/subsets + shared witness helpers; `wing.go` fish + three
+  wings; `colour.go` simple colouring. Geometry (units/peers/sees) is re-derived from
+  scratch — the verifier imports only solver's exported Grid/SolveResult/Event types
+  (ADR-0013 non-circularity; solver's helpers are unexported anyway).
+- **Brute force:** bitmask row/col/box masks, most-constrained-cell-first (ties by
+  lowest index), digits ascending — deterministic returned solution, count capped at 2
+  with early bail. A zero-candidate cell is picked first and prunes naturally.
+- **Check order as pinned:** per event: shape/bounds guard → placement: oracle-equality
+  (`ErrPlacementNotOracle`) → named single recomputation → witness-is-the-cell →
+  gridAfter; elimination: scheduling (`ErrSingleAvailable`, run first as the
+  cheapest-first mirror — legal since order-independent per the manifest) → liveness
+  (`ErrEliminationNotCandidate`, all stated candidates) → oracle-truth
+  (`ErrEliminationIsTruth`) → witness structure (descriptive) → gridAfter-unchanged →
+  shadow update. Whole-result: final grid == oracle solution when status==solved and
+  count==1. Non-solved / count!=1 results: events still validated; oracle-anchored
+  checks (truth, placement-equality, final grid) skipped — no unique truth to compare.
+- **Witness checks are per-elimination justification, not completeness:** each check
+  asserts the pattern structurally holds in the shadow state AND every *stated*
+  elimination is a target the pattern justifies; it does not require the event to state
+  *all* justified targets (completeness is the solver's exhaustiveness, not event
+  soundness — ADR-0013 asks that the witness pattern "structurally hold").
+  Exception: colouring wrap pins "whole colour class" (the falsified class must be
+  eliminated exactly), per the F-06 manifest.
+- **Witness distinctness enforced centrally** (rejects e.g. a duplicated naked-subset
+  cell faking k cells with k-1); hidden-subset requires exactly k confined digits whose
+  spots cover the witness set exactly; fish requires ≥2 spots per base line and
+  witness-set == base-line spots exactly (exact-k cover doubles as the finned
+  exclusion, matching F-05); w_wing tries all A/B-vs-link-pair role assignments;
+  colouring 2-colours over strong links recomputed from shadow, rejects
+  non-connected/odd-cycle witness sets, wrap requires the eliminated class self-seeing.
+- **Corpus evidence beyond the pinned suites** (throwaway probe, not committed): over
+  all 55 seeds ReplayVerify passes with 0 failures across 3228 events; 11 of 13
+  techniques fire naturally in-corpus (naked_single 2645, hidden_single 415, pointing
+  88, claiming 21, naked_subset 25, x_wing 3, swordfish 1, xy_wing 13, xyz_wing 3,
+  w_wing 12, simple_colouring 2). hidden_subset and jellyfish (0 corpus events) were
+  probed green against the F-04/F-05 fixture grids (stalled solves, genuine single
+  event each) — all 13 checkers have positive evidence ahead of F-07.
+- **candidateChecks canon (f-05 carry-over):** the verifier reads no counters and
+  freezes nothing about absolute `candidateChecks`; the as-built w-wing order remains
+  canon, unthreatened by this piece.
