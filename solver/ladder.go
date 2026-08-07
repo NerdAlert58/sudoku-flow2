@@ -11,6 +11,23 @@ type technique struct {
 var ladder = []technique{
 	{band: "Easy", fire: (*solveState).fireNakedSingle},
 	{band: "Easy", fire: (*solveState).fireHiddenSingle},
+	elimination("locked_candidates_pointing", "Medium", (*solveState).detectPointing),
+	elimination("locked_candidates_claiming", "Medium", (*solveState).detectClaiming),
+	elimination("naked_subset", "Medium", (*solveState).detectNakedSubset),
+	elimination("hidden_subset", "Medium", (*solveState).detectHiddenSubset),
+}
+
+// elimination wires a detection func's frozen event string once, here at the
+// registry. Detections return ok only for instances with non-empty
+// eliminations, so an unproductive pattern never fires (ADR-0007).
+func elimination(name, band string, detect func(*solveState) ([]Cell, []Elimination, bool)) technique {
+	return technique{band: band, fire: func(s *solveState) bool {
+		witnesses, elims, ok := detect(s)
+		if ok {
+			s.eliminate(name, witnesses, elims)
+		}
+		return ok
+	}}
 }
 
 func (s *solveState) runPass() bool {
