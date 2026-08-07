@@ -20,3 +20,6 @@ Deferred advisory findings from build reviews (dated; none block Done).
 - F-07 verifier RUBRIC_GAP-1: SolveCapped's zero-candidate branch has no self-test
   (mutation survives today because every committed capped state genuinely stalls);
   add a capped-unsolvable byte-match test if iso fixtures ever evolve.
+- F-08 verifier RUBRIC_GAP-2: add a two-call seed-determinism self-equality test
+  (property, not golden bytes) to catch hidden global-rng/time deps; verified true
+  empirically today.

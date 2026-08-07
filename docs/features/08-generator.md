@@ -1,6 +1,6 @@
 # Feature: Generator — sealed dig-and-grade generation
 
-**ID:** F-08 · **Roadmap piece:** P-08 · **Status:** Not started
+**ID:** F-08 · **Roadmap piece:** P-08 · **Status:** Done (2026-08-07) — 100-seed matrix + 20-puzzle replay slice green; grade==band by construction; sealed counter (guard live-fire-proven); verifier PASS r1 (tuned, 4/4 mutations); readability PASS; leanness clean
 
 ## Description
 The `generate` package: randomized full-grid fill (backtracking, sealed), clue removal
@@ -95,3 +95,35 @@ None.
 
 ## Implementation notes (filled in by the building agent)
 > Decisions and rationale land here as the piece builds.
+
+- **Shape:** three files — `generate/generate.go` (C3 entry + dig loop), `generate/fill.go`
+  (randomized full-grid backtracking filler, rng-shuffled digit order per cell),
+  `generate/count.go` (uniqueness counter, capped at 2, fewest-candidates cell choice).
+  Imports across the package: stdlib + `solver` only.
+- **Accept condition (AC-2):** `dig` returns only when
+  `solver.Solve(g).Status == "solved" && res.Grade == want`; `Generate` then returns the
+  band's mapped literal. A grade/band mismatch is unrepresentable — there is no code path
+  that returns a puzzle without that check having passed.
+- **Grade-on-every-removal:** rather than digging to minimal and grading once, `dig` grades
+  after every uniqueness-preserving removal once the grid is at or below `maxGivens = 45`
+  givens. This catches each band at whatever depth its grade first appears, which is why
+  no per-band depth tuning was needed. The 45-given floor also guarantees every accepted
+  puzzle has ≥ 36 blanks (AC-1's EventCount > 0 holds with margin).
+- **Retry unit:** a fresh fill per attempt (no re-dig of the same grid, no restart
+  heuristics). Empirically unnecessary to do more: across the 120 committed seeds and an
+  800-seed robustness sweep (200/band, seeds 70001–70200), zero budget exhaustions; worst
+  observed call 79 ms against the 5 s deadline.
+- **Determinism/reproducibility:** all rng consumption (fill shuffles, `rng.Perm(81)` dig
+  order) is sequential on the caller's `*rand.Rand`; the uniqueness counter uses a fixed
+  1..9 digit order, so it consumes no randomness. Same seed → same puzzle.
+- **Ctx discipline (AC-3):** band validated first; `ctx.Err()` checked at the top of the
+  attempt loop and before every removal inside `dig` — a dead context can never reach the
+  accept path. Exhaustion error wraps both `ErrBudgetExhausted` and `ctx.Err()` (two-`%w`
+  wrap); error returns are `("", "")`.
+- **Sealing (AC-4):** counter/attempt state lives in unexported types; the count reaches
+  callers only as dig's keep/restore decision. No oracle import anywhere in shipped code —
+  the F-06 source-level import guard passes unchanged, as does the solver determinism
+  suite (AC-5).
+- **Measured (Apple Silicon, no race):** attempts per call min/med/p90/max over the 30
+  committed seeds per band — easy 1/1/1/1 (42µs–196µs), medium 1/3/8/29 (0.4ms–33ms),
+  hard 1/9/28/39 (0.4ms–50ms), expert 1/4/13/16 (0.4ms–20ms).
