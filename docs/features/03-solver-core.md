@@ -1,6 +1,6 @@
 # Feature: Solver core — grid, parse, singles, loop, events, metrics
 
-**ID:** F-03 · **Roadmap piece:** P-03 · **Status:** Not started
+**ID:** F-03 · **Roadmap piece:** P-03 · **Status:** Done (2026-08-06) — repo-wide -race green; 95.8% coverage, solver blocks 100%; test-verifier PASS (tuned, 8/8 ACs, mutation-verified); readability PASS; leanness clean
 
 ## Description
 The deterministic heart: the grid/candidate model, input parsing and validation, the
@@ -104,3 +104,32 @@ None.
 ## Implementation notes (filled in by the building agent)
 > The agent implementing this feature records its decisions and rationale here as it
 > builds. Cross-cutting discoveries propagate to ROADMAP.md or ARCHITECTURE.md.
+
+- **Layout:** `grid.go` (Grid, Parse, sentinels, canonical 27-unit table), `event.go`
+  (wire-frozen event structs), `candidates.go` (bitmask candidate state, counted
+  accessor, placement propagation, zero-candidate scan), `ladder.go` (ordered technique
+  registry + `runPass`), `singles.go` (the two fire funcs), `solver.go` (Solve loop,
+  per-solve state, result/grade assembly). All files well inside the readability budget.
+- **Candidate state is incremental**, not per-pass recomputed: `[81]uint16` bitmasks
+  initialized once from the givens; a placement zeroes the cell's mask and strips the
+  digit from all three houses. Chosen because F-04/F-05 eliminations must persist across
+  passes — recompute-from-grid would silently undo them.
+- **Counting convention:** `solveState.hasCandidate` is the single counted accessor
+  (ADR-0007). Naked-single detection queries all 9 digits per empty cell, then tests
+  count==1; hidden-single queries every empty cell of a unit per digit; both
+  short-circuit only at the first canonical firing instance. Candidate initialization
+  and the top-of-pass zero-candidate scan read the bitmasks directly — setup and
+  set-emptiness tests, not (cell,digit) detection queries — so they add zero checks,
+  which also keeps the ADR-0014 complete-grid edge at exactly 0/0/0.
+- **Hidden-single scan nesting:** units outer (rows 0-8 → cols 0-8 → boxes 0-8
+  row-major), digits ascending inner, first sole place wins.
+- **Ladder extension point (F-04/F-05):** `ladder.go` holds an ordered
+  `[]technique{band, fire}`; `runPass` walks it cheapest-first and records the
+  highest-fired index. Grade = band of the hardest technique fired; `"Easy"` when
+  nothing fired on a solved grid (ADR-0014); `""` for stalled/unsolvable. Later pieces
+  append entries without touching `Solve`.
+- **Technique name strings** live in the fire funcs (passed to `place`); ladder entries
+  carry only the band. A `name` field is deferred until a real caller needs it
+  (F-04's `hardestTechnique` is the likely one).
+- **Status strings** are literals at the three `result` call sites; exported constants
+  deferred until httpapi consumes them (F-04+).
