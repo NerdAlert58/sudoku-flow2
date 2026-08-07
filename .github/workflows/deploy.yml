@@ -20,12 +20,14 @@ jobs:
         run: npm install --global vercel@58
       - name: vercel pull
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-      - name: vercel build
-        run: vercel build --prod --token="$VERCEL_TOKEN"
       - name: vercel deploy
         id: deploy
+        # Remote build on Vercel (no --prebuilt): the classic @vercel/go runtime's
+        # locally-built function output does not survive the prebuilt upload path
+        # (ENOENT bootstrap, run 31186845829); the F-01 spike proved the remote-build
+        # path end-to-end. Explicit --prod target per ADR-0016.
         run: |
-          url=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          url=$(vercel deploy --prod --yes --token="$VERCEL_TOKEN")
           echo "deployment url: $url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
       - name: smoke production domain
