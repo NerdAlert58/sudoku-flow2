@@ -387,3 +387,32 @@ question → options → selected → reasons.
   route; merged through full CI gates.
 - **Attempt 3:** SUCCESS end-to-end (run 31186845829) — gate → approval → deploy →
   smoke green. Production live at https://sudoku-flow2.vercel.app
+
+## D-033 — User-challenged verification: repo visibility (D-007) and Vercel token (D-022)
+- **Challenge 1: "I have a paid GitHub account, so public should not have been needed."**
+  Verified empirically on the user's own account (plan not readable via API token):
+  - Repo flipped PRIVATE. Branch protection: API returns full active config (Free+private
+    would 403 "Upgrade") — required status checks DO work on private under the paid
+    plan. D-007 half-corrected: public was NOT needed for the CI-blocks-merge criterion.
+  - Approval gate: deploy.yml dispatched while private went STRAIGHT to in_progress —
+    no waiting state; run 31190257296 deployed to production unGated end-to-end
+    (identical already-live master commit; no content change; recorded honestly).
+    Deployment protection rules (required reviewers) are NOT enforced on private below
+    Enterprise. D-007 half-vindicated: public remains REQUIRED for the PRD's enforced
+    manual-approval criterion.
+  - Repo restored PUBLIC; re-arm proven: fresh dispatch entered `waiting` and was
+    deliberately rejected (run 31190608303, approval record state=rejected). Current
+    docs pages no longer carry a crisp availability note (restructured) — the empirical
+    probe on this account supersedes them.
+  - Standing offer to the user: private + advisory-only approval gate is available any
+    time at the cost of that one PRD criterion's enforcement.
+- **Challenge 2: "I set up a never-expiring Vercel token for repos like this."**
+  CONFIRMED: op://CLI-Secrets/Vercel/credential holds a vcp_ dashboard PAT (updated
+  2026-08-04, pre-dating this run). Validated against the Vercel API (200) and installed
+  as the production-environment VERCEL_TOKEN secret — permanently closing D-032's
+  token-lifecycle caveat. D-022's miss acknowledged: the fallback chain never consulted
+  the user's standing secrets contract (SECRETS.md → CLI-Secrets vault); future runs
+  check there FIRST.
+- **Surfaced, not fixed (secrets gate):** SECRETS.md's Vercel row still describes the
+  old expiring auth.json import; the vault now holds the vcp_ PAT. The note is stale —
+  user's to update (coordinator did not modify vault or SECRETS.md).
