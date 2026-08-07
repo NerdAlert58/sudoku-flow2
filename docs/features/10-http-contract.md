@@ -1,6 +1,6 @@
 # Feature: HTTP contract — full /v1 surface + edge matrix
 
-**ID:** F-10 · **Roadmap piece:** P-10 · **Status:** Not started
+**ID:** F-10 · **Roadmap piece:** P-10 · **Status:** In progress (started 2026-08-07, baseline 23c93f3)
 
 ## Description
 Completes the frozen wire contract: `/v1/solve`, `/v1/generate`, `/v1/validate-batch`
@@ -108,3 +108,42 @@ None.
 
 ## Implementation notes (filled in by the building agent)
 > Decisions and rationale land here as the piece builds.
+
+- **Layout:** one file per handler (`solve.go`, `generate.go`, `batch.go`, `puzzles.go`)
+  plus `gate.go` for the shared transport gate; wire shapes live in `contracts.go` (the
+  C1 declared home); routes wired in `routes.go`. All functions within the readability
+  budget (longest: `handleValidateBatch`, 33 lines).
+- **Gate precedence** is one function, `gatePostJSON`: method (405 + exact `Allow`,
+  ADR-0005) → content type via `mime.ParseMediaType` (415, header-only — body unread) →
+  `Content-Length` fast-path 413 (zero reads, AUDIT A7) → lazy `http.MaxBytesReader`.
+  `decodeBody` distinguishes `*http.MaxBytesError` (413) from all other decode errors
+  (400 `invalid_input`), which makes `{"puzzles":[123]}` and `[]` schema-level 400s for
+  free. `gateMethod` is shared by health (refactored from F-01's inline check, same
+  message) and puzzles — three callers.
+- **solveTimeMs** (ADR-0006): `time.Since` around `solver.Solve` only, converted in one
+  helper `msOf` used by both solve and batch items. The invalid-400 path never starts a
+  timer, so the golden body's literal `0` is structural, not formatted.
+- **Non-solved `solution` field:** not pinned by any test or ADR; it carries
+  `res.Solution.String()` (the partial grid) uniformly — the least-code mapping from
+  SolveResult and useful to the F-11 UI. Flagging in case the intent was `""` for
+  stalled/unsolvable.
+- **hardestTechnique:** the solver's ladder registry is unexported by design, so
+  `batch.go` carries a 13-entry `ladderRank` map (contract data mirroring PRD §Domain
+  context). Drift is caught by `TestBatchContractFullCorpusInOrder`, which recomputes
+  expectations from live solver events.
+- **Batch fan-out** (AC-4): `wg.Go` (Go 1.25+) goroutine-per-puzzle writing into a
+  pre-sized slice — each goroutine owns one index, counters are per-solve (ADR-0007),
+  no locks needed; green under `-race` over the 55-puzzle corpus and the 256-item cap
+  test.
+- **Generate RNG:** per-request `math/rand.Rand` seeded from `crypto/rand` (concurrent
+  requests must not share a seed; `crypto/rand.Read` cannot fail on Go 1.24+).
+  `mapGenerateError` defaults to 500 `generation_failed` for anything that is not
+  `ErrUnknownBand` — the honest-failure posture of ADR-0009. Enum validation is
+  delegated to `generate.Generate`'s own `ErrUnknownBand` (checked before its retry
+  loop), so the handler has no duplicate enum list.
+- **Dependency materialization (coordination flag):** F-08's `generate/` package was a
+  declared dependency but is unmerged (`feature/f-08`, commit 9fdf04c, based on this
+  branch's baseline 23c93f3). Its committed files were restored verbatim into the
+  working tree (`git restore --source=feature/f-08 -- generate/`) — uncommitted,
+  untracked — so the repo builds and the F-10 suite runs. Merge order at integration:
+  f-08 before (or with) f-10.
