@@ -1,6 +1,6 @@
 # Feature: Ladder upper tier — fish, wings, simple colouring
 
-**ID:** F-05 · **Roadmap piece:** P-05 · **Status:** Not started
+**ID:** F-05 · **Roadmap piece:** P-05 · **Status:** Done (2026-08-06) — ALL 55 corpus puzzles solve logic-only; -race green; 98.8% coverage (solver 100% blocks); test-verifier PASS r2 (tuned, 6+1 mutations); readability PASS; leanness clean
 
 ## Description
 Techniques 7–13: `x_wing`, `swordfish`, `jellyfish` (plain fish only — no fins, no
@@ -95,3 +95,49 @@ None.
 
 ## Implementation notes (filled in by the building agent)
 > Decisions and rationale land here as the piece builds.
+
+- **Layout:** three new files, one concept each — `solver/fish.go` (x_wing /
+  swordfish / jellyfish as one parameterized plain-fish core, k=2/3/4),
+  `solver/wings.go` (xy_wing, xyz_wing, w_wing + shared geometry helpers:
+  `sees`, `peerCells`, `exactCandidates`, `elimsSeeingAll`, `sortedCells`),
+  `solver/colouring.go` (simple_colouring). Registry: seven `elimination(...)`
+  entries appended to `ladder` in `solver/ladder.go` after `hidden_subset`, in
+  the frozen order; bands Hard (7–10) / Expert (11–13) ride the existing
+  per-entry `band` field, so grading needed no new code.
+- **Plain-fish gate:** one check — `popcount(cover union) == k` — is both the
+  fish definition and the finned/sashimi exclusion (AC-4). Base lines are
+  filtered to >=2 candidate spots before combination enumeration; combos run
+  lexicographic over the ascending eligible-line list via the existing
+  `forEachCombo`. Unproductive plain fish (e.g. the {2,5} rectangle in the
+  beyond-ladder stall grid) return false from the combo callback and
+  enumeration continues, so they never fire and never mask the stall.
+- **AUDIT L1 code shape (AC-3):** `detectSimpleColouring` builds the conjugate
+  graph from units with exactly two candidate cells (already-true
+  biconditionals), 2-colours each component by pinned BFS (FIFO, neighbours
+  ascending, seed colour 0, first assignment wins), then concludes wrap by
+  direct fact-combination: `classSharesUnit` finds two same-colour cells
+  sharing a unit and the whole class is eliminated in one event. There is no
+  trial assignment, no propagation, no revert anywhere in the package — source
+  reviewed; F-06 replay is the mechanical backstop. Odd cycles need no special
+  case: first-assignment-wins forces the colliding pair into one colour class
+  and the wrap check catches them as same-colour-same-unit.
+- **w_wing ordering detail:** eliminations depend only on (A, B, Y), not on
+  which strong-link unit witnesses the pattern, so `wWingLink` computes elims
+  first and short-circuits before the unit scan when empty; the canonical 0–26
+  unit scan then only picks W1/W2 for the event. Event-identical to scanning
+  units first, cheaper on candidateChecks, still deterministic.
+- **Convention compliance:** every candidate query flows through the counted
+  `hasCandidate` accessor (directly or via `digitSpotsInUnit` /
+  `cellCandidates`); witnesses sort row-major, eliminations are born sorted by
+  row-major scans; no maps are iterated (arrays/slices only), so determinism
+  double-run holds by construction.
+- **Readability budget:** all functions <=50 lines, nesting <=3, gocyclo max 9
+  (<=10), files 100/206/139 lines (<=400). No `// COMPLEXITY:` markers needed.
+- **Verification:** gofmt clean, `go vet` clean, `go test -race -count=1 ./...`
+  green repo-wide including all-55 corpus (AC-1), determinism double-run
+  (AC-6), iteration-cap invariant, finned-only negative (AC-4), grading bands
+  (AC-5), golden ORIGINAL#1 log, and all F-03/F-04 suites. Corpus
+  hardest-technique histogram: naked_single 25, locked_candidates_pointing 5,
+  naked_subset 5, x_wing 1, xy_wing 9, w_wing 8, simple_colouring 2 (55/55
+  solved; swordfish/jellyfish/xyz_wing appear in fixtures but are never the
+  corpus-hardest).
