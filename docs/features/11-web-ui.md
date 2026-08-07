@@ -1,6 +1,6 @@
 # Feature: Embedded web UI
 
-**ID:** F-11 · **Roadmap piece:** P-11 · **Status:** Not started
+**ID:** F-11 · **Roadmap piece:** P-11 · **Status:** Done (2026-08-07) — DOM contract 15/15 green; visual smoke 11/11 (pre+post refactor); verifier PASS + re-check PASS (tuned); readability PASS r2 with recorded file-length exemption; leanness applied
 
 ## Description
 The full embedded SPA replacing F-01's placeholder: the 81-cell grid hero, seed dropdown
@@ -104,11 +104,86 @@ None.
 (inherit from CONTEXT.md §Rigor)
 
 ## Complexity exemptions
-None.
+- web/app.js:<file> — max_file_lines:400 exceeded (528 post-decomposition; 513 pre) — the frozen
+  Allow-list (source) pins exactly three asset filenames (index.html, app.css, app.js),
+  so file-splitting is structurally unavailable; ~76 lines are contract-pinned data
+  tables (13-technique NAMES/BANDS/EXPLAIN maps) and ARCHITECTURE.md §Known Tradeoffs
+  explicitly concedes the vanilla-JS cost ("several hundred lines… accepted by the PRD").
+  Function-level budgets remain fully enforced (no function exemption granted). —
+  authorized by coordinator under autonomous mandate (DECISIONS.md D-031), 2026-08-07
 
 ## Manual setup required
 Visual smoke requires a human-equivalent browser pass — performed by the operator agent
 with the Chrome tooling and recorded per checklist item.
 
 ## Implementation notes (filled in by the building agent)
+
+### Visual smoke record (coordinator, real Chrome on macOS, 2026-08-07)
+
+Server: PORT=8123 local binary. All 11 checklist items PASS:
+1. Manual entry: digit typed into R1C2 renders; focus auto-advances; native focus ring.
+2. Paste: typing the 81-char ORIGINAL #1 string live-populates the grid (verified
+   cell-by-cell against the corpus).
+3. Clear: full reset (grid, dropdown, metrics, step counter, explanation → hint).
+4. Seed dropdown: 4 tier optgroups, 55 options from /v1/puzzles; selecting Medium #1
+   loaded its givens (verified against corpus string).
+5. Solve: Status solved · Grade Medium; quartet 58 iterations / 58 events / 14831
+   candidateChecks / 0.08 ms (iterations==events invariant visible live).
+6. Statistics: ladder-ordered histogram (Naked single 36, Hidden single 20, Pointing 2),
+   difficulty Medium, accent bars.
+7. Highlights: all three states simultaneously distinct at step 29 — witness (tint +
+   solid accent border), elimination (dashed border), placement (solid accent fill,
+   white digit); givens black vs placed blue.
+8. Transport: First/Prev/Play/Next/Last; Play flips to Pause and auto-advances; auto-
+   stops at 58/58 flipping back to Play; Next/Last disabled at end; step position +
+   per-step description correct throughout.
+9. Event-log click (#29 row) jumps the grid/viewer to that step.
+10. Explanation panel prose swaps per step; band chip flipped Easy→Medium correctly;
+    static pre-solve hint present before solving.
+11. A11y floor: native select/buttons, aria-live status region, focus rings intact.
+Console: zero errors/exceptions during the entire session.
+
+### Post-refactor re-smoke (coordinator, real Chrome, 2026-08-07 — after renderStep decomposition)
+Seed load (Medium #1), Solve (solved · Medium · 58/58/14831/0.05ms), step navigation
+(Prev → 57/58 with placement highlight moving R9C9→R9C8, panels/log/transport correct),
+all through the decomposed paintGrid/applyHighlights/renderPanels/syncLog path —
+behavior identical to the pre-refactor smoke. Closes the verifier re-check's
+RUBRIC_GAP-1 staleness condition.
+
 > Decisions, the per-item smoke record, and any deviations land here.
+
+**Build (2026-08-07, feature/f-11).** Replaced the F-01 placeholders in `web/index.html`,
+`web/app.css`, `web/app.js`; `web/web.go` unchanged (already exports `FS` over the three
+assets).
+
+Decisions:
+- **Gridline recipe:** container `gap: 1px` + `background: var(--border)` + literal
+  `border: 3px` outer frame; internal box boundaries are 1px gap + 2px same-color
+  `border-left`/`border-top` on the 4th/7th column/row cells via `:nth-child` — reads as
+  a contiguous 3px line, keeps row-major DOM order and auto-placement (no spacer nodes).
+- **Solution field never read.** After any solve the viewer jumps to
+  `renderStep(events.length)`, which renders exclusively from `input` (step 0) and
+  `events[i-1].gridAfter` — so stalled/unsolvable partial `solution` grids can never be
+  auto-filled by construction (AC-5). For solved puzzles this shows the final grid
+  immediately with the transport ready to rewind.
+- **invalid_input:** a 400 whose body carries `status:"invalid_input"` renders the full
+  solve shape honestly (status line, zero-valued quartet); other non-200s render the
+  error envelope. Step viewer stays reset for invalid input.
+- **Bands/prose:** technique→band map copied from `solver/ladder.go` (Easy: singles;
+  Medium: locked candidates + subsets; Hard: fish + XY-wing; Expert: XYZ/W-wing +
+  simple colouring); 13-entry plain-English `EXPLAIN` map, 1–2 sentences each.
+- **Givens vs placed** (optional per brief): implemented — `.given` bold, `.filled` in
+  accent, derived per step from the input grid.
+- Editing any cell resets solve state (stale status/steps never shown against an edited
+  grid). Paste fills on any 81-char `[0-9.]` input; whitespace stripped.
+
+Layer (a) — DOM contract: all 15 tests in `web/dom_contract_test.go` green
+(`go test -race -count=1 ./...` fully green; gofmt/vet/build clean).
+
+Functional self-check (live server, PORT=8123): `/`, `/app.js`, `/app.css` → 200 with
+correct content types; `/v1/puzzles` → 4 sections (Original/Medium/Hard/Very Hard);
+Medium seed solve → 200 `solved`/`Medium`, 58 events, 81-char `gridAfter`, 0-based
+row/col in placements/witnesses/eliminations; `{"puzzle":"bad"}` → 400 full solve shape
+with quartet present.
+
+coordinator's browser pass; per-item results to be recorded here.

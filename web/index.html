@@ -7,10 +7,60 @@
 <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-<main>
-<h1>sudoku-flow</h1>
-<p>A constructive, logic-only sudoku solver. The interactive solver arrives in a later piece; the API is live at <code>/v1/health</code>.</p>
+<header class="masthead">
+  <h1>sudoku-flow</h1>
+  <p class="tagline">Constructive, logic-only sudoku solving. Every step derived, explained, and replayable. Nothing guessed.</p>
+</header>
+<main class="layout">
+  <section class="board" aria-label="Puzzle board">
+    <div id="grid" class="grid" role="group" aria-label="Sudoku grid"></div>
+    <div class="transport" role="group" aria-label="Step controls">
+      <button id="btn-first" type="button" disabled>First</button>
+      <button id="btn-prev" type="button" disabled>Prev</button>
+      <button id="btn-play" type="button" disabled>Play</button>
+      <button id="btn-next" type="button" disabled>Next</button>
+      <button id="btn-last" type="button" disabled>Last</button>
+      <span id="step-pos" class="step-pos">Step 0 / 0</span>
+    </div>
+    <p id="step-desc" class="step-desc"></p>
+  </section>
+  <aside class="controls">
+    <div class="panel">
+      <h2>Puzzle</h2>
+      <label for="seed-select">Seed puzzle</label>
+      <select id="seed-select">
+        <option value="">Choose a seed puzzle</option>
+      </select>
+      <label for="paste-input">Or paste an 81-character puzzle (0 or . for blanks)</label>
+      <input id="paste-input" type="text" spellcheck="false" autocomplete="off" placeholder="007000400060070030...">
+      <div class="actions">
+        <button id="solve-btn" type="button" class="primary">Solve</button>
+        <button id="clear-btn" type="button">Clear</button>
+      </div>
+      <p id="status" class="status" aria-live="polite"></p>
+      <dl id="metrics" class="metrics">
+        <div class="metric"><dt>Iterations</dt><dd id="m-iterations">&#8212;</dd></div>
+        <div class="metric"><dt>Events</dt><dd id="m-events">&#8212;</dd></div>
+        <div class="metric"><dt>Candidate checks</dt><dd id="m-checks">&#8212;</dd></div>
+        <div class="metric"><dt>Solve time</dt><dd id="m-time">&#8212;</dd></div>
+      </dl>
+    </div>
+    <div id="explain" class="panel">
+      <h2>Explanation <span id="band-chip" class="chip hidden"></span></h2>
+      <p id="hint">Pick a seed or enter a puzzle, then press Solve. Each solving step will be explained here in plain English as you walk through it.</p>
+      <p id="explain-text" class="explain-text hidden"></p>
+    </div>
+  </aside>
+  <section id="stats" class="panel" aria-label="Statistics">
+    <h2>Statistics</h2>
+    <p id="stats-difficulty" class="stats-difficulty"></p>
+    <div id="histogram" class="histogram"></div>
+  </section>
+  <section class="panel log-panel" aria-label="Event log">
+    <h2>Event log</h2>
+    <ul id="event-log" class="event-log"></ul>
+  </section>
 </main>
-<script src="/app.js"></script>
+<script src="/app.js" defer></script>
 </body>
 </html>

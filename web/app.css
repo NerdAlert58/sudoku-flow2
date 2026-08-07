@@ -1,15 +1,386 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --bg: #fff;
+  --surface: #f7f7f8;
+  --border: #e2e2e5;
+  --text: #1a1a1a;
+  --text-muted: #6b6b70;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
+  margin: 0;
   font-family: system-ui, sans-serif;
-  max-width: 40rem;
-  margin: 4rem auto;
-  padding: 0 1rem;
+  font-size: 15px;
   line-height: 1.5;
+  background: var(--surface);
+  color: var(--text);
 }
 
-code {
+.masthead {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4) var(--space-4);
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.tagline {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.layout {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 var(--space-4) var(--space-5);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* --- Grid hero: gap-as-gridlines. Container background is the line color;
+   1px gaps are the thin lines; box boundaries read as 3px (1px gap + 2px
+   cell border in the same color); the outer frame is a literal 3px border. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(9, 48px);
+  grid-template-rows: repeat(9, 48px);
+  gap: 1px;
+  background: var(--border);
+  border: 3px solid var(--border);
+  width: max-content;
+}
+
+.cell {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+  font-size: 20px;
+  background: var(--bg);
+  color: var(--text);
+  caret-color: var(--accent);
+}
+
+.cell:nth-child(9n + 4),
+.cell:nth-child(9n + 7) {
+  border-left: 2px solid var(--border);
+}
+
+.cell:nth-child(n + 28):nth-child(-n + 36),
+.cell:nth-child(n + 55):nth-child(-n + 63) {
+  border-top: 2px solid var(--border);
+}
+
+.cell.given {
+  font-weight: 700;
+}
+
+.cell.filled {
+  color: var(--accent);
+}
+
+.cell.placement {
+  background: var(--accent);
+  color: #fff;
+}
+
+.cell.witness {
+  background: #dbeafe;
+  border: 2px solid var(--accent);
+}
+
+.cell.elimination {
+  background: #eeeef1;
+  border: 2px dashed var(--text-muted);
+}
+
+/* --- Controls and panels --- */
+
+.panel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: var(--space-4);
+}
+
+.panel h2 {
+  margin: 0 0 var(--space-3);
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-4);
+}
+
+label {
+  display: block;
+  margin: var(--space-3) 0 var(--space-1);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+label:first-of-type {
+  margin-top: 0;
+}
+
+#seed-select,
+#paste-input {
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#paste-input {
   font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--text-muted);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.status {
+  margin: var(--space-3) 0 0;
+  min-height: 1.5em;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+}
+
+.metric {
+  background: var(--surface);
+  border-radius: 6px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.metric dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.metric dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Step viewer chrome --- */
+
+.board {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 446px;
+}
+
+.transport button {
+  padding: var(--space-1) var(--space-3);
+  font-size: 13px;
+}
+
+.step-pos {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.step-desc {
+  margin: 0;
+  min-height: 1.5em;
+  max-width: 446px;
+  font-size: 14px;
+}
+
+/* --- Explanation panel --- */
+
+.chip {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 1px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  background: #dbeafe;
+  color: var(--accent-hover);
+}
+
+#hint {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.explain-text {
+  margin: 0;
+  font-size: 14px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* --- Statistics --- */
+
+.stats-difficulty {
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.histogram {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+}
+
+.bar-track {
+  background: var(--surface);
+  border-radius: 3px;
+  height: 14px;
+}
+
+.bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.bar-count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.histogram-empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* --- Event log --- */
+
+.event-log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 420px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.event-log li {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.event-log li:hover {
+  background: var(--surface);
+}
+
+.event-log li.active {
+  background: var(--surface);
+  border-left-color: var(--accent);
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
 }

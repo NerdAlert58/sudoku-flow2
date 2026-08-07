@@ -360,3 +360,17 @@ question → options → selected → reasons.
   amended to 30s (EVAL's threshold is explicitly "locally"; the product 5s budget is
   the handler's per ADR-0009). (3) Interpretive freeze ratified: generate response
   difficulty==grade==canonical band (ADR-0009 literal equality).
+
+## D-031 — F-11 readability gate routing (blocking FAIL, round 1)
+- **Question:** Two unauthorized budget breaches: renderStep cyclomatic ~13>10; app.js
+  513>400 lines. Route per 5b.9.3?
+- **Selected:** renderStep → (a) decompose (paintGrid/applyHighlights/renderPanels/
+  syncLog — reviewer's split adopted; no exemption deserved where decomposition
+  preserves everything). File length → (b) authorize into ## Complexity exemptions:
+  the frozen allow-list pins exactly three asset filenames (splitting unavailable),
+  ~76 lines are contract-pinned data tables, and ARCHITECTURE §Known Tradeoffs already
+  concedes the vanilla-JS cost. Leanness advisory items (dead .log-empty rule,
+  redundant transport clauses, double class-strip, unreachable Play guard) fold into
+  the same builder round. Re-gates: 5b.6 + 5b.7 + 5b.9 round 2 on the reworked diff.
+- **Reasons:** Exemptions are for real constraints, not convenience: the allow-list IS
+  a checkable repo-reachable constraint; a 13-branch function is not.
